@@ -86,23 +86,23 @@ dependencies = [
 
 [[package]]
 name = "ddc-hi"
-version = "0.0.1"
-source = "git+https://github.com/arcnmx/ddc-hi-rs.git#3406f4acf07af28cb03d761b9a5f37e1a285eb18"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "ddc 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "ddc-i2c 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ddc-i2c 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "ddc-winapi 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "edid 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "failure 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "mccs 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "mccs-caps 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "mccs-db 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "nvapi 0.0.4 (git+https://github.com/arcnmx/nvapi-rs.git)",
+ "nvapi 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "ddc-i2c"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "ddc 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -126,7 +126,7 @@ name = "ddcset"
 version = "0.0.1"
 dependencies = [
  "clap 2.31.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "ddc-hi 0.0.1 (git+https://github.com/arcnmx/ddc-hi-rs.git)",
+ "ddc-hi 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "env_logger 0.5.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "failure 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "hex 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -345,19 +345,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "nvapi"
-version = "0.0.4"
-source = "git+https://github.com/arcnmx/nvapi-rs.git#8c484b954958d0fec6cab319ce79fa1d070c40e6"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "i2c 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "nvapi-sys 0.0.4 (git+https://github.com/arcnmx/nvapi-rs.git)",
+ "nvapi-sys 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "void 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "nvapi-sys"
-version = "0.0.4"
-source = "git+https://github.com/arcnmx/nvapi-rs.git#8c484b954958d0fec6cab319ce79fa1d070c40e6"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "bitflags 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "winapi 0.3.4 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -458,7 +458,7 @@ dependencies = [
  "proc-macro2 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "quote 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive_internals 0.22.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "syn 0.12.14 (registry+https://github.com/rust-lang/crates.io-index)",
+ "syn 0.12.15 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -467,7 +467,7 @@ version = "0.22.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "proc-macro2 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "syn 0.12.14 (registry+https://github.com/rust-lang/crates.io-index)",
+ "syn 0.12.15 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -493,7 +493,7 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "0.12.14"
+version = "0.12.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "proc-macro2 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -662,8 +662,8 @@ dependencies = [
 "checksum cfg-if 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "d4c819a1287eb618df47cc647173c5c4c66ba19d888a6e50d605672aed3140de"
 "checksum clap 2.31.2 (registry+https://github.com/rust-lang/crates.io-index)" = "f0f16b89cbb9ee36d87483dc939fe9f1e13c05898d56d7b230a0d4dff033a536"
 "checksum ddc 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "80ce20bdc48e34acc97d865ba9a4e21a77040eef561b2671f722bd2ac9ee1728"
-"checksum ddc-hi 0.0.1 (git+https://github.com/arcnmx/ddc-hi-rs.git)" = "<none>"
-"checksum ddc-i2c 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "0e00a449915dd796e3e38124a9211fbdf772f9040daa2f63f5b44a2052af732c"
+"checksum ddc-hi 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "4666374ccd685bded7e7fd067621383f882abaf1ee3c5db5dc62a5869c1dfe93"
+"checksum ddc-i2c 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "66503057bd41fc21b532b3ebe33b2ec57e5d4971fcfc3844306ebcb499b6c8c2"
 "checksum ddc-winapi 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "3238e71b65c870e236de529546a689202fca64a2eaeec43995d28f6920d7fc9e"
 "checksum edid 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "9bc713da4cdfc706399994b922141ca0bab58fbb316efa33d32ed16d3e34f3ca"
 "checksum env_logger 0.5.6 (registry+https://github.com/rust-lang/crates.io-index)" = "0561146661ae44c579e993456bc76d11ce1e0c7d745e57b2fa7146b6e49fa2ad"
@@ -690,8 +690,8 @@ dependencies = [
 "checksum nom 3.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "05aec50c70fd288702bcd93284a8444607f3292dbdf2a30de5ea5dcdbe72287b"
 "checksum num-traits 0.1.43 (registry+https://github.com/rust-lang/crates.io-index)" = "92e5113e9fd4cc14ded8e499429f396a20f98c772a47cc8622a736e1ec843c31"
 "checksum num-traits 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "dee092fcdf725aee04dd7da1d21debff559237d49ef1cb3e69bcb8ece44c7364"
-"checksum nvapi 0.0.4 (git+https://github.com/arcnmx/nvapi-rs.git)" = "<none>"
-"checksum nvapi-sys 0.0.4 (git+https://github.com/arcnmx/nvapi-rs.git)" = "<none>"
+"checksum nvapi 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "6e4716a30292adcaecac2531de5a44865023bc85f93dc6c5a714564c382f010f"
+"checksum nvapi-sys 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "84957655fabdd02161722ad2e87d99637bb2f1c01796a3d11f4837518904dc0f"
 "checksum pkg-config 0.3.9 (registry+https://github.com/rust-lang/crates.io-index)" = "3a8b4c6b8165cd1a1cd4b9b120978131389f64bdaf456435caa41e630edba903"
 "checksum proc-macro2 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)" = "cd07deb3c6d1d9ff827999c7f9b04cdfd66b1b17ae508e14fe47b620f2282ae0"
 "checksum quick-error 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "eda5fe9b71976e62bc81b781206aaa076401769b2143379d3eb2118388babac4"
@@ -709,7 +709,7 @@ dependencies = [
 "checksum serde_derive_internals 0.22.2 (registry+https://github.com/rust-lang/crates.io-index)" = "d2f04ed291686ce195a5c8f554aaf36e50a721fbf829ee3b6151e6f85eccf945"
 "checksum serde_yaml 0.7.3 (registry+https://github.com/rust-lang/crates.io-index)" = "e0f868d400d9d13d00988da49f7f02aeac6ef00f11901a8c535bd59d777b9e19"
 "checksum syn 0.11.11 (registry+https://github.com/rust-lang/crates.io-index)" = "d3b891b9015c88c576343b9b3e41c2c11a51c219ef067b264bd9c8aa9b441dad"
-"checksum syn 0.12.14 (registry+https://github.com/rust-lang/crates.io-index)" = "8c5bc2d6ff27891209efa5f63e9de78648d7801f085e4653701a692ce938d6fd"
+"checksum syn 0.12.15 (registry+https://github.com/rust-lang/crates.io-index)" = "c97c05b8ebc34ddd6b967994d5c6e9852fa92f8b82b3858c39451f97346dcce5"
 "checksum synom 0.11.3 (registry+https://github.com/rust-lang/crates.io-index)" = "a393066ed9010ebaed60b9eafa373d4b1baac186dd7e008555b0f702b51945b6"
 "checksum synstructure 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)" = "3a761d12e6d8dcb4dcf952a7a89b475e3a9d69e4a69307e01a470977642914bd"
 "checksum termcolor 0.3.6 (registry+https://github.com/rust-lang/crates.io-index)" = "adc4587ead41bf016f11af03e55a624c06568b5a19db4e90fde573d805074f83"
