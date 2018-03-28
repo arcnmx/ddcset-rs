@@ -31,7 +31,7 @@ impl Drop for DisplaySleep {
     fn drop(&mut self) {
         info!("Waiting for display communication delays before exit");
         for display in self.0.iter_mut() {
-            display.handle().sleep()
+            display.handle.sleep()
         }
     }
 }
@@ -50,12 +50,12 @@ fn displays(query: (Query, bool)) -> Result<Vec<Display>, Error> {
     let needs_caps = query.1;
     let query = query.0;
     Display::enumerate().into_iter()
-        .map(|mut d| if needs_caps && d.info().backend == Backend::WinApi {
+        .map(|mut d| if needs_caps && d.info.backend == Backend::WinApi {
             d.update_capabilities().map(|_| d)
         } else {
             Ok(d)
         }).filter(|d| if let &Ok(ref d) = d {
-            query.matches(d.info())
+            query.matches(&d.info)
         } else {
             true
         }).collect()
@@ -197,9 +197,9 @@ fn main_result() -> Result<i32, Error> {
             for mut display in displays(query)? {
                 {
                     let _ = display.update_from_ddc();
-                    println!("Display on {}:", display.info().backend);
-                    println!("\tID: {}", display.info().id);
-                    if let Some(value) = display.info().manufacturer_id.as_ref() {
+                    println!("Display on {}:", display.info.backend);
+                    println!("\tID: {}", display.info.id);
+                    if let Some(value) = display.info.manufacturer_id.as_ref() {
                         println!("\tManufacturer ID: {}", value);
                     }
                     if opt_caps {
@@ -207,14 +207,13 @@ fn main_result() -> Result<i32, Error> {
                             error!("Failed to update capabilities: {}", e);
                         }
                     }
-                    let info = display.info();
-                    if let Some(value) = info.model_name.as_ref() {
+                    if let Some(value) = display.info.model_name.as_ref() {
                         println!("\tModel: {}", value);
                     }
-                    if let Some(value) = info.serial_number.as_ref() {
+                    if let Some(value) = display.info.serial_number.as_ref() {
                         println!("\tSerial: {}", value);
                     }
-                    if let Some(value) = info.mccs_version.as_ref() {
+                    if let Some(value) = display.info.mccs_version.as_ref() {
                         println!("\tMCCS: {}", value);
                     } else {
                         println!("\tMCCS: Unavailable");
@@ -230,10 +229,10 @@ fn main_result() -> Result<i32, Error> {
             let mut exit_code = 0;
             for mut display in displays(query)? {
                 if let Err(e) = (|| -> Result<(), Error> {
-                    println!("Display on {}:", display.info().backend);
-                    println!("\tID: {}", display.info().id);
+                    println!("Display on {}:", display.info.backend);
+                    println!("\tID: {}", display.info.id);
                     display.update_capabilities()?;
-                    for feature in (0..0x100).filter_map(|v| display.info().mccs_database.get(v as _)) {
+                    for feature in (0..0x100).filter_map(|v| display.info.mccs_database.get(v as _)) {
                         println!("\tFeature 0x{:02x}: {}", feature.code, feature.name.as_ref().map(|v| &v[..]).unwrap_or("Unknown"));
                         println!("\t\tAccess: {:?}", feature.access);
                         if feature.mandatory {
@@ -292,26 +291,27 @@ fn main_result() -> Result<i32, Error> {
 
             let mut exit_code = 0;
             for mut display in displays(query)? {
-                println!("Display on {}:", display.info().backend);
-                println!("\tID: {}", display.info().id);
+                println!("Display on {}:", display.info.backend);
+                println!("\tID: {}", display.info.id);
                 if let Err(e) = (|| -> Result<(), Error> {
                     let codes = if let Some(codes) = codes.clone() {
                         let _ = display.update_from_ddc();
-                        if opt_caps || display.info().mccs_version.is_none() {
+                        if opt_caps || display.info.mccs_version.is_none() {
                             display.update_capabilities()?;
                         }
                         codes
                     } else {
                         if !opt_scan {
                             display.update_capabilities()?;
-                            (0..0x100).map(|v| v as FeatureCode).filter(|&c| display.info().mccs_database.get(c).is_some()).collect()
+                            (0..0x100).map(|v| v as FeatureCode).filter(|&c| display.info.mccs_database.get(c).is_some()).collect()
                         } else {
                             (0..0x100).map(|v| v as FeatureCode).collect()
                         }
                     };
 
                     for code in codes {
-                        let feature = display.info().mccs_database.get(code).cloned();
+                        let feature = display.info.mccs_database.get(code);
+                        let handle = &mut display.handle;
                         if let Err(e) = (|| -> Result<(), Error> {
                             if let Some(feature) = feature {
                                 if feature.access == Access::WriteOnly {
@@ -319,7 +319,6 @@ fn main_result() -> Result<i32, Error> {
                                     return Ok(())
                                 }
 
-                                let handle = display.handle();
                                 match feature.ty {
                                     ValueType::Unknown => {
                                         let value = handle.get_vcp_feature(code)?;
@@ -354,7 +353,6 @@ fn main_result() -> Result<i32, Error> {
                                     },
                                 }
                             } else {
-                                let handle = display.handle();
                                 if opt_table {
                                     let value = handle.table_read(code)?;
                                     println!("\tFeature 0x{:02x} = {}", code, TableInterpretation::Generic.format(&value).unwrap());
@@ -396,19 +394,19 @@ fn main_result() -> Result<i32, Error> {
 
             let mut exit_code = 0;
             for mut display in displays(query)? {
-                println!("Display on {}:", display.info().backend);
-                println!("\tID: {}", display.info().id);
+                println!("Display on {}:", display.info.backend);
+                println!("\tID: {}", display.info.id);
 
                 if let Err(e) = (|| -> Result<(), Error> {
                     match value {
-                        Ok(value) => display.handle().set_vcp_feature(feature, value),
-                        Err(ref table) => display.handle().table_write(feature, opt_offset, &table),
+                        Ok(value) => display.handle.set_vcp_feature(feature, value),
+                        Err(ref table) => display.handle.table_write(feature, opt_offset, &table),
                     }?;
 
                     if opt_verify {
                         let matches = match value {
-                            Ok(value) => display.handle().get_vcp_feature(feature)?.value() == value,
-                            Err(ref table) => &display.handle().table_read(feature)? == table,
+                            Ok(value) => display.handle.get_vcp_feature(feature)?.value() == value,
+                            Err(ref table) => &display.handle.table_read(feature)? == table,
                         };
 
                         if !matches {

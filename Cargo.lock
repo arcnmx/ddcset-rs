@@ -87,7 +87,7 @@ dependencies = [
 [[package]]
 name = "ddc-hi"
 version = "0.0.1"
-source = "git+https://github.com/arcnmx/ddc-hi-rs.git#8bd9390d542c70e4b0a73b0dee03d3f7d30fcd51"
+source = "git+https://github.com/arcnmx/ddc-hi-rs.git#3406f4acf07af28cb03d761b9a5f37e1a285eb18"
 dependencies = [
  "ddc 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "ddc-i2c 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
