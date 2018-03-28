@@ -14,6 +14,17 @@ license = "MIT"
 travis-ci = { repository = "arcnmx/ddcset-rs" }
 maintenance = { status = "passively-maintained" }
 
+[profile.dev]
+panic = "abort"
+[profile.test]
+panic = "abort"
+[profile.bench]
+panic = "abort"
+[profile.release]
+panic = "abort"
+opt-level = 2
+lto = true
+
 [dependencies]
 ddc-hi = { version = "~0.0.1", git = "https://github.com/arcnmx/ddc-hi-rs.git" }
 clap = { version = "^2.31.2", default-features = false }
