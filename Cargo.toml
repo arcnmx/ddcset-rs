@@ -1,0 +1,25 @@
+[package]
+name = "ddcset"
+version = "0.0.1"
+authors = ["arcnmx"]
+
+description = "DDC/CI display control application"
+keywords = ["ddc", "vcp", "mccs", "ddccontrol", "ddcutil"]
+
+repository = "https://github.com/arcnmx/ddcset-rs"
+readme = "README.md"
+license = "MIT"
+
+[badges]
+travis-ci = { repository = "arcnmx/ddcset-rs" }
+maintenance = { status = "passively-maintained" }
+
+[dependencies]
+ddc-hi = { version = "~0.0.1", git = "https://github.com/arcnmx/ddc-hi-rs.git" }
+clap = { version = "^2.31.2", default-features = false }
+failure = "^0.1.1"
+env_logger = "^0.5.6"
+log = "^0.4.1"
+mccs-db = "^0.1.1"
+result = "^1.0.0"
+hex = "^0.3.1"
