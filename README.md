@@ -20,7 +20,7 @@ Currently supported platforms:
 
 ## Installation
 
-[Binaries are available on some platforms](https://github.com/arcnmx/mccs-rs/releases).
+[Binaries are available on some platforms](https://github.com/arcnmx/ddcset-rs/releases).
 [Cargo](https://www.rust-lang.org/en-US/install.html) can also be used to install
 directly from source:
 
