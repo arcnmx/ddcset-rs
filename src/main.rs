@@ -78,6 +78,7 @@ fn main_result() -> Result<i32, Error> {
             .value_name("BACKEND")
             .takes_value(true)
             .multiple(true)
+            .number_of_values(1)
             .possible_values(&backend_values)
             .help("Backend driver whitelist")
         ).arg(Arg::with_name("id")
@@ -166,11 +167,13 @@ fn main_result() -> Result<i32, Error> {
 
     let matches = app.get_matches();
 
-    // TODO: matches.backend
     let mut query = Query::Any;
     let mut needs_caps = false;
-    if let Some(backend) = matches.value_of("backend").map(Backend::from_str) {
-        query = Query::And(vec![query, Query::Backend(backend.unwrap())])
+    if let Some(backends) = matches.values_of("backend").map(|v| v.map(Backend::from_str)) {
+        let backends = backends
+            .map(|b| b.map(Query::Backend))
+            .collect::<Result<_, _>>().unwrap();
+        query = Query::And(vec![query, Query::Or(backends)])
     }
     if let Some(id) = matches.value_of("id") {
         query = Query::And(vec![query, Query::Id(id.into())])
