@@ -105,6 +105,7 @@ fn main_result() -> Result<i32, Error> {
             .value_name("SERIAL")
             .takes_value(true)
             .help("Filter by matching serial number")
+            // TODO: filter by index? winapi makes things difficult, nothing is identifying...
         ).subcommand(SubCommand::with_name("detect")
             .about("List detected displays")
             .arg(Arg::with_name("caps")

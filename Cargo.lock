@@ -77,7 +77,7 @@ dependencies = [
 
 [[package]]
 name = "ddc-hi"
-version = "0.1.1"
+version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "ddc 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -85,6 +85,7 @@ dependencies = [
  "ddc-winapi 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "edid 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "failure 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "log 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "mccs 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "mccs-caps 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "mccs-db 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -114,10 +115,10 @@ dependencies = [
 
 [[package]]
 name = "ddcset"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "clap 2.31.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "ddc-hi 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ddc-hi 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "env_logger 0.5.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "failure 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "hex 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -619,7 +620,7 @@ dependencies = [
 "checksum cfg-if 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "d4c819a1287eb618df47cc647173c5c4c66ba19d888a6e50d605672aed3140de"
 "checksum clap 2.31.2 (registry+https://github.com/rust-lang/crates.io-index)" = "f0f16b89cbb9ee36d87483dc939fe9f1e13c05898d56d7b230a0d4dff033a536"
 "checksum ddc 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "80ce20bdc48e34acc97d865ba9a4e21a77040eef561b2671f722bd2ac9ee1728"
-"checksum ddc-hi 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "f5f73d670d37c595fb80af4af9681dc72a3c4bec65e3dedc9c6421f717a6dea4"
+"checksum ddc-hi 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)" = "07709de0bb89f70aad729a10bf890bf1e319f8ebd86535fe59644f04da609723"
 "checksum ddc-i2c 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "66503057bd41fc21b532b3ebe33b2ec57e5d4971fcfc3844306ebcb499b6c8c2"
 "checksum ddc-winapi 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "3238e71b65c870e236de529546a689202fca64a2eaeec43995d28f6920d7fc9e"
 "checksum edid 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "9bc713da4cdfc706399994b922141ca0bab58fbb316efa33d32ed16d3e34f3ca"
