@@ -385,7 +385,7 @@ fn main_result() -> Result<i32, Error> {
             Ok(exit_code)
         },
         ("setvcp", Some(matches)) => {
-            let feature = matches.value_of("feature").map(FeatureCode::from_str).unwrap()?;
+            let feature = matches.value_of("feature").map(|s| FeatureCode::from_str_radix(s, 16).or_else(|_| FeatureCode::from_str(s))).unwrap()?;
             let opt_offset = matches.value_of("offset").map(u16::from_str).unwrap_or(Ok(0))?;
             let opt_table = matches.is_present("table");
             let opt_verify = matches.is_present("verify");
