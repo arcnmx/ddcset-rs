@@ -1,22 +1,11 @@
-extern crate ddc_hi;
-extern crate mccs_db;
-extern crate clap;
-#[macro_use]
-extern crate failure;
-#[macro_use]
-extern crate log;
-extern crate env_logger;
-extern crate result;
-extern crate hex;
-
 use std::io::{self, Write};
 use std::str::FromStr;
 use std::process::exit;
 use clap::{Arg, App, SubCommand, AppSettings};
-use failure::Error;
+use anyhow::{Error, format_err};
+use log::{info, error};
 use ddc_hi::{Backend, Display, Query, FeatureCode, Ddc, DdcTable, DdcHost};
 use mccs_db::{Access, ValueInterpretation, TableInterpretation, ValueType};
-use result::ResultOptionExt;
 
 #[derive(Default)]
 struct DisplaySleep(Vec<Display>);
@@ -286,7 +275,7 @@ fn main_result() -> Result<i32, Error> {
                 .map(|s|
                     s.map(|s| FeatureCode::from_str_radix(s, 16).or_else(|_| FeatureCode::from_str(s)))
                     .collect::<Result<Vec<_>, _>>()
-                ).invert()?;
+                ).transpose()?;
 
             let opt_raw = matches.is_present("raw");
             let opt_table = matches.is_present("table");
