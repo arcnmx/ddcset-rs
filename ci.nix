@@ -10,6 +10,7 @@
       # XXX: apply hack to fix https://github.com/NixOS/nixpkgs/pull/145819
       nativeBuildInputs = old.nativeBuildInputs ++ [ pkgs.gperf ];
     });
+    inherit ((import config.channels.rust.path { pkgs = musl64; }).stable) rustPlatform;
   };
   ddcset-checked = ddcset.overrideAttrs (_: {
     doCheck = true;
