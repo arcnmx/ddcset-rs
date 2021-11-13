@@ -25,4 +25,8 @@ in rustPlatform.buildRustPackage {
 
   cargoSha256 = "1vjjvc42pwx492h9rq00q11d59sj25vjmw734sllkjzxr8azzfnc";
   doCheck = false;
+
+  meta = {
+    platforms = platforms.unix ++ platforms.windows;
+  };
 }

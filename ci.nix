@@ -5,7 +5,10 @@ in {
   ci.gh-actions.enable = true;
   cache.cachix.arc.enable = true;
   channels = {
-    nixpkgs = "21.11";
+    nixpkgs = {
+      # see https://github.com/arcnmx/nixexprs-rust/issues/10
+      args.config.checkMetaRecursively = false;
+    };
     rust = "master";
   };
   tasks = {
@@ -14,7 +17,7 @@ in {
     }));
   };
   jobs = {
-    nixos.tasks.build.inputs = [ ddcset.windows ];
+    nixos.tasks.build-windows.inputs = singleton ddcset.windows;
     macos.system = "x86_64-darwin";
   };
 }
