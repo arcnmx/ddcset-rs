@@ -5,7 +5,7 @@ in {
   ci.gh-actions.enable = true;
   cache.cachix.arc.enable = true;
   channels = {
-    nixpkgs = "21.05";
+    nixpkgs = "21.11";
     rust = "master";
   };
   tasks = {
