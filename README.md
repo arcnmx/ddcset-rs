@@ -1,6 +1,6 @@
 # ddcset
 
-[![travis-badge][]][travis] [![release-badge][]][cargo] [![license-badge][]][license]
+[![release-badge][]][cargo] [![license-badge][]][license]
 
 `ddcset` is an application for controlling connected monitors over DDC/CI.
 
@@ -33,8 +33,6 @@ The NVIDIA Linux drivers have had broken DDC/CI support for years now. [There ar
 workarounds](http://www.ddcutil.com/nvidia/) but it seems that it is not
 currently possible to use DDC/CI over DisplayPort.
 
-[travis-badge]: https://img.shields.io/travis/arcnmx/ddcset-rs/master.svg?style=flat-square
-[travis]: https://travis-ci.org/arcnmx/ddcset-rs
 [release-badge]: https://img.shields.io/crates/v/ddcset.svg?style=flat-square
 [cargo]: https://crates.io/crates/ddcset
 [license-badge]: https://img.shields.io/badge/license-MIT-ff69b4.svg?style=flat-square
