@@ -9,8 +9,12 @@ in {
     rust = "master";
   };
   tasks = {
-    build.inputs = with ddcset; [
-      ddcset windows
-    ];
+    build.inputs = singleton (ddcset.overrideAttrs (_: {
+      doCheck = true;
+    }));
+  };
+  jobs = {
+    nixos.tasks.build.inputs = [ ddcset.windows ];
+    macos.system = "x86_64-darwin";
   };
 }

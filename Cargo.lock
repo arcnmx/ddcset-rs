@@ -115,9 +115,9 @@ dependencies = [
 
 [[package]]
 name = "ddc-hi"
-version = "0.4.0"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cba6b915e233eca763c5bf15cd5cf96ab53920cfad3e1cb2b8e519e94bc103d2"
+checksum = "9c6747b17c926a2aa34739b30f1a6cc726e3a7baf0e2f69a4c03a95cf5de94de"
 dependencies = [
  "anyhow",
  "ddc",
