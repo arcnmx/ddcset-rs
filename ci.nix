@@ -3,7 +3,7 @@
   artifactRoot = ".ci/artifacts";
   artifacts = "${artifactRoot}/bin/ddcset*";
   musl64 = pkgsCross.musl64.pkgsStatic;
-  ddcset-static = musl64.callPackage ./derivation.nix {
+  ddcset-static = (musl64.callPackage ./derivation.nix {
     udev = (musl64.eudev.override {
       glib = null; gperf = null; util-linux = null; kmod = null;
     }).overrideAttrs (old: {
@@ -11,7 +11,11 @@
       nativeBuildInputs = old.nativeBuildInputs ++ [ pkgs.gperf ];
     });
     inherit ((import config.channels.rust.path { pkgs = musl64; }).stable) rustPlatform;
-  };
+  }).overrideAttrs (old: {
+    # XXX: why is this needed?
+    NIX_LDFLAGS = old.NIX_LDFLAGS or "" + " -static";
+    RUSTFLAGS = old.RUSTFLAGS or "" + " -C default-linker-libraries=yes";
+  });
   ddcset-checked = ddcset.overrideAttrs (_: {
     doCheck = true;
   });
