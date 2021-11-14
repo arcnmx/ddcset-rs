@@ -51,6 +51,7 @@ in {
       };
     };
 
+    # XXX: symlinks are not followed, see https://github.com/softprops/action-gh-release/issues/182
     artifactPackage = runCommand "ddcset-artifacts" { } (''
       mkdir -p $out/bin
     '' + concatStringsSep "\n" (mapAttrsToList (key: ddcset: ''
