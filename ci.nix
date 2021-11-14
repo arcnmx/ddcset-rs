@@ -40,24 +40,22 @@ in {
           build-windows.inputs = singleton ddcset.windows;
           build-static.inputs = singleton ddcset-static;
         };
-        artifactPackage = symlinkJoin {
-          name = "ddcset-artifacts";
-          paths = [ ddcset-static ddcset.windows ];
-          postBuild = ''
-            mv $out/bin/ddcset $out/bin/ddcset-musl64
-          '';
+        artifactPackages = {
+          musl64 = ddcset-static;
+          win64 = ddcset.windows;
         };
       };
       macos = {
         system = "x86_64-darwin";
-        artifactPackage = runCommand "ddcset-artifact" { } ''
-          mkdir -p $out/bin
-          ln -s ${ddcset-checked}/bin/ddcset${hostPlatform.extensions.executable} $out/bin/ddcset-macos64${hostPlatform.extensions.executable}
-        '';
+        artifactPackages.macos = ddcset-checked;
       };
     };
 
-    artifactPackage = mkDefault ddcset-checked;
+    artifactPackage = runCommand "ddcset-artifacts" { } (''
+      mkdir -p $out/bin
+    '' + concatStringsSep "\n" (mapAttrsToList (key: ddcset: ''
+        cp ${ddcset}/bin/ddcset${ddcset.stdenv.hostPlatform.extensions.executable} $out/bin/ddcset-${key}${ddcset.stdenv.hostPlatform.extensions.executable}
+    '') config.artifactPackages));
 
     gh-actions = {
       jobs = mkIf (config.id != "ci") {
@@ -101,7 +99,12 @@ in {
       };
     };
   };
-  options.artifactPackage = mkOption {
-    type = types.package;
+  options = {
+    artifactPackage = mkOption {
+      type = types.package;
+    };
+    artifactPackages = mkOption {
+      type = with types; attrsOf package;
+    };
   };
 }
