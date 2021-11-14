@@ -23,7 +23,7 @@ in rustPlatform.buildRustPackage {
     *.nix
   '' ] ./.;
 
-  cargoSha256 = "1vjjvc42pwx492h9rq00q11d59sj25vjmw734sllkjzxr8azzfnc";
+  cargoSha256 = "059ckpd397prrdzc5n5hmbf3yghdfd7v8mbr1ix0z13pwj1bm4fg";
   doCheck = false;
 
   meta = {
