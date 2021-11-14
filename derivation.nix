@@ -1,6 +1,6 @@
 { rustPlatform
 , nix-gitignore
-, libxcb, udev
+, udev
 , python3, pkg-config
 , hostPlatform
 , lib
@@ -13,7 +13,7 @@ in rustPlatform.buildRustPackage {
   version = cargoToml.package.version;
 
   buildInputs =
-    optionals hostPlatform.isLinux [ libxcb udev ]
+    optionals hostPlatform.isLinux [ udev ]
     ++ optionals hostPlatform.isDarwin [ libiconv CoreGraphics ];
   nativeBuildInputs = [ pkg-config python3 ];
 

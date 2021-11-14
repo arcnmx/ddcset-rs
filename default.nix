@@ -15,7 +15,6 @@
   shellBase = pkgs.shells.rust.stable or (rust.stable.mkShell { });
   shell = shellBase.overrideAttrs (old: with pkgs; {
     buildInputs = old.buildInputs or [] ++ [
-      xorg.libxcb
       udev
     ];
     nativeBuildInputs = old.nativeBuildInputs or [] ++ [
