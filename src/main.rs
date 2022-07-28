@@ -47,7 +47,7 @@ fn displays(query: (Query, bool)) -> Result<Vec<Display>, Error> {
             query.matches(&d.info)
         } else {
             true
-        }).collect()
+        }).map(|v| v.map_err(Into::into)).collect()
 }
 
 fn main_result() -> Result<i32, Error> {
