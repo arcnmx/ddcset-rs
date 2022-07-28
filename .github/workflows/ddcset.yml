@@ -32,7 +32,7 @@ jobs:
     name: ddcset-macos
     permissions:
       contents: write
-    runs-on: macOS-latest
+    runs-on: macos-10.15
     steps:
     - id: checkout
       name: git clone
