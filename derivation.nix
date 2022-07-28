@@ -23,7 +23,7 @@ in {
 
   src = source;
   inherit cargoLock buildType;
-  ${if cargoLock == null then "cargoSha256" else null} = "059ckpd397prrdzc5n5hmbf3yghdfd7v8mbr1ix0z13pwj1bm4fg";
+  ${if cargoLock == null then "cargoSha256" else null} = "sha256-2SuAtdPTOQgyGZljLy2rkieCe37QFohuTWEAwKe1L6I=";
   doCheck = false;
 
   meta = {
