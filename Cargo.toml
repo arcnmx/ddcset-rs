@@ -17,10 +17,6 @@ maintenance = { status = "passively-maintained" }
 
 [profile.dev]
 panic = "abort"
-[profile.test]
-panic = "abort"
-[profile.bench]
-panic = "abort"
 [profile.release]
 panic = "abort"
 opt-level = 2
