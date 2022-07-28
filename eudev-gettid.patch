@@ -1,0 +1,17 @@
+diff --git a/src/shared/missing.h b/src/shared/missing.h
+index 1967840cd..521157708 100644
+--- a/src/shared/missing.h
++++ b/src/shared/missing.h
+@@ -107,11 +107,10 @@ struct btrfs_ioctl_vol_args {
+ #define MS_PRIVATE  (1 << 18)
+ #endif
+ 
+-#if !HAVE_DECL_GETTID
++#define gettid gettid_syscall
+ static inline pid_t gettid(void) {
+         return (pid_t) syscall(SYS_gettid);
+ }
+-#endif
+ 
+ #ifndef MS_REC
+ #define MS_REC 16384

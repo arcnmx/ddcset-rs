@@ -9,6 +9,7 @@
     }).overrideAttrs (old: {
       # XXX: apply hack to fix https://github.com/NixOS/nixpkgs/pull/145819
       nativeBuildInputs = old.nativeBuildInputs ++ [ pkgs.gperf ];
+      patches = old.patches or [ ] ++ [ ./eudev-gettid.patch ];
     });
     inherit ((import config.channels.rust.path { pkgs = musl64; }).stable) rustPlatform;
   }).overrideAttrs (old: {
