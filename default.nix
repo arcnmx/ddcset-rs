@@ -12,16 +12,24 @@
   windows = mingwW64.callPackage ./derivation.nix {
     inherit (rustW64.stable) rustPlatform;
   };
-  shellBase = pkgs.shells.rust.stable or (rust.stable.mkShell { });
-  shell = shellBase.overrideAttrs (old: with pkgs; {
-    buildInputs = old.buildInputs or [] ++ [
+  mingwW64-target = rust.lib.targetForConfig.${mingwW64.hostPlatform.config};
+  rustChannel = rust.stable.override {
+    channelOverlays = [
+      (cself: csuper: {
+        sysroot-std = csuper.sysroot-std ++ [ cself.manifest.targets.${mingwW64-target}.rust-std ];
+      })
+    ];
+  };
+  shell = with pkgs; rustChannel.mkShell {
+    buildInputs = [
       udev
     ];
-    nativeBuildInputs = old.nativeBuildInputs or [] ++ [
+    nativeBuildInputs = [
+      mingwW64.stdenv.cc
       python3
       pkg-config
     ];
-  });
+  };
 in ddcset // {
   inherit ddcset windows shell;
 }
