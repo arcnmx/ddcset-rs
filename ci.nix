@@ -17,7 +17,9 @@
     NIX_LDFLAGS = old.NIX_LDFLAGS or "" + " -static";
     RUSTFLAGS = old.RUSTFLAGS or "" + " -C default-linker-libraries=yes";
   });
-  ddcset-checked = ddcset.overrideAttrs (_: {
+  ddcset-checked = (ddcset.override {
+    inherit ((import config.channels.rust.path { inherit pkgs; }).stable) rustPlatform;
+  }).overrideAttrs (_: {
     doCheck = true;
   });
 in {

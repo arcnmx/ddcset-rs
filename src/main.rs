@@ -3,8 +3,9 @@ use std::str::FromStr;
 use std::process::exit;
 use clap::{Arg, App, SubCommand, AppSettings};
 use anyhow::{Error, format_err};
-use log::{info, error};
-use ddc_hi::{Backend, Display, Query, FeatureCode, Ddc, DdcTable, DdcHost};
+use log::{info, warn, error};
+use ddc_hi::{Backend, Display, Query, FeatureCode};
+use ddc_hi::traits::*;
 use mccs_db::{Access, ValueInterpretation, TableInterpretation, ValueType};
 
 #[derive(Default)]
@@ -35,19 +36,30 @@ fn main() {
     }
 }
 
-fn displays(query: (Query, bool)) -> Result<Vec<Display>, Error> {
-    let needs_caps = query.1;
-    let query = query.0;
-    Display::enumerate().into_iter()
-        .map(|mut d| if needs_caps && d.info.backend == Backend::WinApi {
-            d.update_capabilities().map(|_| d)
-        } else {
-            Ok(d)
-        }).filter(|d| if let &Ok(ref d) = d {
-            query.matches(&d.info)
-        } else {
-            true
-        }).map(|v| v.map_err(Into::into)).collect()
+fn displays((query, needs_caps): (Query, bool)) -> Result<Vec<Display>, Error> {
+    let mut errors = Vec::new();
+    let displays: Vec<_> = Display::enumerate_all().into_iter()
+        .filter_map(|d| match d {
+            Ok(d) => Some(d),
+            Err(e) => {
+                warn!("Failed to enumerate {}: {}", e.backend(), e);
+                errors.push(e);
+                None
+            },
+        }).map(|mut d| {
+            if let Err(e) = d.update_fast(needs_caps) {
+                warn!("Failed to query {}/{}: {}", d.backend(), d.id, e);
+            }
+            d
+        }).filter(|d| match &query {
+            Query::Any => true,
+            query => query.matches(&d.info()),
+        }).collect();
+
+    match errors.into_iter().next() {
+        Some(e) if displays.is_empty() => Err(e.into()),
+        _ => Ok(displays),
+    }
 }
 
 fn main_result() -> Result<i32, Error> {
@@ -189,24 +201,29 @@ fn main_result() -> Result<i32, Error> {
 
             for mut display in displays(query)? {
                 {
-                    let _ = display.update_from_ddc();
-                    println!("Display on {}:", display.info.backend);
-                    println!("\tID: {}", display.info.id);
-                    if let Some(value) = display.info.manufacturer_id.as_ref() {
+                    println!("Display on {}:", display.backend());
+                    println!("\tID: {}", display.id);
+
+                    let info = display.info();
+                    let res = if opt_caps {
+                        display.update_all()
+                    } else {
+                        Ok(drop(display.update_version()))
+                    };
+                    if let Err(e) = res {
+                        warn!("Failed to query display: {}", e);
+                    }
+
+                    if let Some(value) = info.manufacturer_id.as_ref() {
                         println!("\tManufacturer ID: {}", value);
                     }
-                    if opt_caps {
-                        if let Err(e) = display.update_capabilities() {
-                            error!("Failed to update capabilities: {}", e);
-                        }
-                    }
-                    if let Some(value) = display.info.model_name.as_ref() {
+                    if let Some(value) = info.model_name.as_ref() {
                         println!("\tModel: {}", value);
                     }
-                    if let Some(value) = display.info.serial_number.as_ref() {
+                    if let Some(value) = info.serial_number.as_ref() {
                         println!("\tSerial: {}", value);
                     }
-                    if let Some(value) = display.info.mccs_version.as_ref() {
+                    if let Some(value) = info.mccs_version.as_ref() {
                         println!("\tMCCS: {}", value);
                     } else {
                         println!("\tMCCS: Unavailable");
@@ -222,10 +239,11 @@ fn main_result() -> Result<i32, Error> {
             let mut exit_code = 0;
             for mut display in displays(query)? {
                 if let Err(e) = (|| -> Result<(), Error> {
-                    println!("Display on {}:", display.info.backend);
-                    println!("\tID: {}", display.info.id);
-                    display.update_capabilities()?;
-                    for feature in (0..0x100).filter_map(|v| display.info.mccs_database.get(v as _)) {
+                    println!("Display on {}:", display.backend());
+                    println!("\tID: {}", display.id);
+                    display.update_fast(true)?;
+                    let mccs_database = display.mccs_database().unwrap_or_default();
+                    for feature in (0..0x100).filter_map(|v| mccs_database.get(v as _)) {
                         println!("\tFeature 0x{:02x}: {}", feature.code, feature.name.as_ref().map(|v| &v[..]).unwrap_or("Unknown"));
                         println!("\t\tAccess: {:?}", feature.access);
                         if feature.mandatory {
@@ -284,26 +302,27 @@ fn main_result() -> Result<i32, Error> {
 
             let mut exit_code = 0;
             for mut display in displays(query)? {
-                println!("Display on {}:", display.info.backend);
-                println!("\tID: {}", display.info.id);
+                println!("Display on {}:", display.backend());
+                println!("\tID: {}", display.id);
                 if let Err(e) = (|| -> Result<(), Error> {
+                    let mut mccs_database = display.mccs_database().unwrap_or_default();
                     let codes = if let Some(codes) = codes.clone() {
-                        let _ = display.update_from_ddc();
-                        if opt_caps || display.info.mccs_version.is_none() {
-                            display.update_capabilities()?;
-                        }
+                        let _ = display.update_fast(opt_caps);
                         codes
                     } else {
                         if !opt_scan {
                             display.update_capabilities()?;
-                            (0..0x100).map(|v| v as FeatureCode).filter(|&c| display.info.mccs_database.get(c).is_some()).collect()
+                            (0..0x100).map(|v| v as FeatureCode).filter(|&c| mccs_database.get(c).is_some()).collect()
                         } else {
                             (0..0x100).map(|v| v as FeatureCode).collect()
                         }
                     };
+                    if let Some(db) = display.mccs_database() {
+                        mccs_database = db;
+                    }
 
                     for code in codes {
-                        let feature = display.info.mccs_database.get(code);
+                        let feature = mccs_database.get(code);
                         let handle = &mut display.handle;
                         if let Err(e) = (|| -> Result<(), Error> {
                             if let Some(feature) = feature {
@@ -387,8 +406,8 @@ fn main_result() -> Result<i32, Error> {
 
             let mut exit_code = 0;
             for mut display in displays(query)? {
-                println!("Display on {}:", display.info.backend);
-                println!("\tID: {}", display.info.id);
+                println!("Display on {}:", display.backend());
+                println!("\tID: {}", display.id);
 
                 if let Err(e) = (|| -> Result<(), Error> {
                     match value {
