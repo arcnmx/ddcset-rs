@@ -1,12 +1,161 @@
 use std::io::{self, Write};
 use std::str::FromStr;
 use std::process::exit;
-use clap::{Arg, App, SubCommand, AppSettings};
+use clap::{Args, Parser, Subcommand};
 use anyhow::{Error, format_err};
 use log::{info, warn, error};
 use ddc_hi::{Backend, Display, Query, FeatureCode};
 use ddc_hi::traits::*;
 use mccs_db::{Access, ValueInterpretation, TableInterpretation, ValueType};
+
+type HexString = Vec<u8>;
+fn parse_hex_string(s: &str) -> Result<HexString, hex::FromHexError> {
+    hex::decode(s)
+}
+
+fn parse_feature(s: &str) -> Result<FeatureCode, Error> {
+    if s.starts_with("0x") {
+        FeatureCode::from_str_radix(&s[2..], 16)
+            .map_err(Into::into)
+    } else {
+        FeatureCode::from_str(s)
+            .map_err(Into::into)
+    }
+}
+
+fn valid_backends() -> Vec<&'static str> {
+    Backend::values().iter()
+        .map(|b| b.name())
+        .collect()
+}
+
+/// DDC/CI monitor control
+#[derive(Parser, Debug)]
+#[clap(author, version, about)]
+struct Cli {
+    #[clap(flatten)]
+    args: GlobalArgs,
+    #[clap(flatten)]
+    filter: Filter,
+    #[clap(subcommand)]
+    command: Command,
+}
+
+#[derive(Args, Debug)]
+struct Filter {
+    /// Backend driver whitelist
+    #[clap(short, long, number_of_values(1), possible_values(valid_backends()))]
+    pub backend: Vec<Backend>,
+    /// Filter by matching backend ID
+    #[clap(short, long)]
+    pub id: Option<String>,
+    /// Filter by matching manufacturer ID
+    #[clap(short = 'g', long = "mfg")]
+    pub manufacturer: Option<String>,
+    /// Filter by matching model
+    #[clap(short = 'l', long = "model")]
+    pub model_name: Option<String>,
+    /// Filter by matching serial number
+    #[clap(short = 'n', long = "sn")]
+    pub serial: Option<String>,
+    // TODO: filter by index? winapi makes things difficult, nothing is identifying...
+}
+
+impl Filter {
+    fn query(&self) -> Query {
+        let mut query = Query::Any;
+        if !self.backend.is_empty() {
+            let backends = self.backend.iter().copied()
+                .map(Query::Backend)
+                .collect();
+            query = Query::And(vec![query, Query::Or(backends)])
+        }
+        if let Some(id) = &self.id {
+            query = Query::And(vec![query, Query::Id(id.into())])
+        }
+        if let Some(manufacturer) = &self.manufacturer {
+            query = Query::And(vec![query, Query::ManufacturerId(manufacturer.into())])
+        }
+        if let Some(model) = &self.model_name {
+            query = Query::And(vec![query, Query::ModelName(model.into())]);
+        }
+        if let Some(serial) = &self.serial {
+            query = Query::And(vec![query, Query::SerialNumber(serial.into())])
+        }
+
+        query
+    }
+
+    fn needs_caps(&self) -> bool {
+        self.model_name.is_some()
+    }
+
+    fn needs_edid(&self) -> bool {
+        self.manufacturer.is_some() || self.serial.is_some()
+    }
+}
+
+#[derive(Args, Debug)]
+struct GlobalArgs {
+    /// Read display capabilities
+    #[clap(short, long)]
+    pub capabilities: bool,
+}
+
+/// List detected displays
+#[derive(Parser, Debug)]
+struct Detect {
+}
+
+/// Query display capabilities
+#[derive(Parser, Debug)]
+struct Capabilities {
+}
+
+/// Get VCP feature value
+#[derive(Parser, Debug)]
+struct GetVCP {
+    /// Feature code
+    #[clap(parse(try_from_str = parse_feature))]
+    pub feature_code: Vec<FeatureCode>,
+    /// Show raw value
+    #[clap(short, long)]
+    pub raw: bool,
+    /// Read as table value
+    #[clap(short, long)]
+    pub table: bool,
+    /// Scan all VCP feature codes
+    #[clap(short, long)]
+    pub scan: bool,
+}
+
+/// Set VCP feature value
+#[derive(Parser, Debug)]
+struct SetVCP {
+    /// Feature code
+    #[clap(parse(try_from_str = parse_feature))]
+    pub feature_code: FeatureCode,
+    /// Value to set
+    #[clap(required_unless_present = "table")]
+    pub value: Option<u16>,
+    /// Read value after writing
+    #[clap(short, long)]
+    pub verify: bool,
+    /// Write a table value
+    #[clap(short, long = "table", conflicts_with = "value", parse(try_from_str = parse_hex_string))]
+    pub table: Option<HexString>,
+    /// Table write offset
+    #[clap(short, long)]
+    pub offset: Option<u16>,
+}
+
+#[derive(Subcommand, Debug)]
+enum Command {
+    Detect(Detect),
+    Capabilities(Capabilities),
+    GetVCP(GetVCP),
+    SetVCP(SetVCP),
+}
 
 #[derive(Default)]
 struct DisplaySleep(Vec<Display>);
@@ -65,147 +214,22 @@ fn displays((query, needs_caps): (Query, bool)) -> Result<Vec<Display>, Error> {
 fn main_result() -> Result<i32, Error> {
     env_logger::init();
 
-    let backend_values: Vec<_> = Backend::values().iter()
-        .map(|v| v.to_string()).collect();
-    let backend_values: Vec<_> = backend_values.iter().map(|v| &v[..]).collect();
+    let Cli { args, command, filter } = Cli::parse();
 
-    let app = App::new("ddcset")
-        .version(env!("CARGO_PKG_VERSION"))
-        .author("arcnmx")
-        .about("DDC/CI monitor control")
-        .arg(Arg::with_name("backend")
-            .short("b")
-            .long("backend")
-            .value_name("BACKEND")
-            .takes_value(true)
-            .multiple(true)
-            .number_of_values(1)
-            .possible_values(&backend_values)
-            .help("Backend driver whitelist")
-        ).arg(Arg::with_name("id")
-            .short("i")
-            .long("id")
-            .value_name("ID")
-            .takes_value(true)
-            .help("Filter by matching backend ID")
-        ).arg(Arg::with_name("manufacturer")
-            .short("g")
-            .long("mfg")
-            .value_name("MANUFACTURER")
-            .takes_value(true)
-            .help("Filter by matching manufacturer ID")
-        ).arg(Arg::with_name("model")
-            .short("l")
-            .long("model")
-            .value_name("MODEL NAME")
-            .takes_value(true)
-            .help("Filter by matching model")
-        ).arg(Arg::with_name("serial")
-            .short("n")
-            .long("sn")
-            .value_name("SERIAL")
-            .takes_value(true)
-            .help("Filter by matching serial number")
-            // TODO: filter by index? winapi makes things difficult, nothing is identifying...
-        ).subcommand(SubCommand::with_name("detect")
-            .about("List detected displays")
-            .arg(Arg::with_name("caps")
-                .short("c")
-                .long("capabilities")
-                .help("Read display capabilities")
-            )
-        ).subcommand(SubCommand::with_name("capabilities")
-            .about("Query display capabilities")
-        ).subcommand(SubCommand::with_name("getvcp")
-            .about("Get VCP feature value")
-            .arg(Arg::with_name("feature")
-                .value_name("FEATURE CODE")
-                .takes_value(true)
-                .multiple(true)
-                .help("Feature code (hexadecimal)")
-            ).arg(Arg::with_name("raw")
-                .short("r")
-                .long("raw")
-                .help("Show raw value")
-            ).arg(Arg::with_name("table")
-                .short("t")
-                .long("table")
-                .help("Read as table value")
-            ).arg(Arg::with_name("caps")
-                .short("c")
-                .long("capabilities")
-                .help("Read display capabilities")
-            ).arg(Arg::with_name("scan")
-                .short("s")
-                .long("scan")
-                .help("Scan all VCP feature codes")
-            )
-        ).subcommand(SubCommand::with_name("setvcp")
-            .about("Set VCP feature value")
-            .arg(Arg::with_name("feature")
-                .value_name("FEATURE CODE")
-                .takes_value(true)
-                .required(true)
-                .help("Feature code hexadecimal")
-            ).arg(Arg::with_name("value")
-                .value_name("VALUE")
-                .takes_value(true)
-                .required(true)
-                .help("Value to set")
-            ).arg(Arg::with_name("verify")
-                .short("v")
-                .long("verify")
-                .help("Read value after writing")
-            ).arg(Arg::with_name("table")
-                .short("t")
-                .long("table")
-                .help("VALUE becomes a hex string")
-            ).arg(Arg::with_name("offset")
-                .short("o")
-                .long("offset")
-                .help("Table write offset")
-            )
-        ).setting(AppSettings::SubcommandRequiredElseHelp);
-
-    let matches = app.get_matches();
-
-    let mut query = Query::Any;
-    let mut needs_caps = false;
-    if let Some(backends) = matches.values_of("backend").map(|v| v.map(Backend::from_str)) {
-        let backends = backends
-            .map(|b| b.map(Query::Backend))
-            .collect::<Result<_, _>>().unwrap();
-        query = Query::And(vec![query, Query::Or(backends)])
-    }
-    if let Some(id) = matches.value_of("id") {
-        query = Query::And(vec![query, Query::Id(id.into())])
-    }
-    if let Some(manufacturer) = matches.value_of("manufacturer") {
-        query = Query::And(vec![query, Query::ManufacturerId(manufacturer.into())])
-    }
-    if let Some(model) = matches.value_of("model") {
-        query = Query::And(vec![query, Query::ModelName(model.into())]);
-        needs_caps = true;
-    }
-    if let Some(serial) = matches.value_of("serial") {
-        query = Query::And(vec![query, Query::SerialNumber(serial.into())])
-    }
-
-    let query = (query, needs_caps);
+    let query = (filter.query(), filter.needs_caps());
+    // TODO: filter.needs_edid()
 
     let mut sleep = DisplaySleep::default();
 
-    match matches.subcommand() {
-        ("detect", Some(matches)) => {
-            let opt_caps = matches.is_present("caps");
-
+    match command {
+        Command::Detect(cmd) => {
             for mut display in displays(query)? {
                 {
                     println!("Display on {}:", display.backend());
                     println!("\tID: {}", display.id);
 
                     let info = display.info();
-                    let res = if opt_caps {
+                    let res = if args.capabilities {
                         display.update_all()
                     } else {
                         Ok(drop(display.update_version()))
@@ -235,7 +259,7 @@ fn main_result() -> Result<i32, Error> {
 
             Ok(0)
         },
-        ("capabilities", Some(..)) => {
+        Command::Capabilities(cmd) => {
             let mut exit_code = 0;
             for mut display in displays(query)? {
                 if let Err(e) = (|| -> Result<(), Error> {
@@ -288,29 +312,18 @@ fn main_result() -> Result<i32, Error> {
 
             Ok(exit_code)
         },
-        ("getvcp", Some(matches)) => {
-            let codes = matches.values_of("feature")
-                .map(|s|
-                    s.map(|s| FeatureCode::from_str_radix(s, 16).or_else(|_| FeatureCode::from_str(s)))
-                    .collect::<Result<Vec<_>, _>>()
-                ).transpose()?;
-
-            let opt_raw = matches.is_present("raw");
-            let opt_table = matches.is_present("table");
-            let opt_caps = matches.is_present("caps");
-            let opt_scan = matches.is_present("scan");
-
+        Command::GetVCP(GetVCP { feature_code, scan, raw, table }) => {
             let mut exit_code = 0;
             for mut display in displays(query)? {
                 println!("Display on {}:", display.backend());
                 println!("\tID: {}", display.id);
                 if let Err(e) = (|| -> Result<(), Error> {
                     let mut mccs_database = display.mccs_database().unwrap_or_default();
-                    let codes = if let Some(codes) = codes.clone() {
-                        let _ = display.update_fast(opt_caps);
-                        codes
+                    let codes = if !feature_code.is_empty() {
+                        let _ = display.update_fast(args.capabilities);
+                        feature_code.clone()
                     } else {
-                        if !opt_scan {
+                        if !scan {
                             display.update_capabilities()?;
                             (0..0x100).map(|v| v as FeatureCode).filter(|&c| mccs_database.get(c).is_some()).collect()
                         } else {
@@ -338,13 +351,13 @@ fn main_result() -> Result<i32, Error> {
                                     },
                                     ValueType::Continuous { mut interpretation } => {
                                         let value = handle.get_vcp_feature(code)?;
-                                        if opt_raw {
+                                        if raw {
                                             interpretation = ValueInterpretation::Continuous;
                                         }
                                         println!("\tFeature 0x{:02x} = {}", feature.code, interpretation.format(&value))
                                     },
                                     ValueType::NonContinuous { ref values, mut interpretation } => {
-                                        if opt_raw {
+                                        if raw {
                                             interpretation = ValueInterpretation::Continuous;
                                         }
 
@@ -356,7 +369,7 @@ fn main_result() -> Result<i32, Error> {
                                         }
                                     },
                                     ValueType::Table { mut interpretation } => {
-                                        if opt_raw {
+                                        if raw {
                                             interpretation = TableInterpretation::Generic;
                                         }
 
@@ -365,7 +378,7 @@ fn main_result() -> Result<i32, Error> {
                                     },
                                 }
                             } else {
-                                if opt_table {
+                                if table {
                                     let value = handle.table_read(code)?;
                                     println!("\tFeature 0x{:02x} = {}", code, TableInterpretation::Generic.format(&value).unwrap());
                                 } else {
@@ -392,16 +405,11 @@ fn main_result() -> Result<i32, Error> {
 
             Ok(exit_code)
         },
-        ("setvcp", Some(matches)) => {
-            let feature = matches.value_of("feature").map(|s| FeatureCode::from_str_radix(s, 16).or_else(|_| FeatureCode::from_str(s))).unwrap()?;
-            let opt_offset = matches.value_of("offset").map(u16::from_str).unwrap_or(Ok(0))?;
-            let opt_table = matches.is_present("table");
-            let opt_verify = matches.is_present("verify");
-
-            let value = if opt_table {
-                Err(hex::decode(matches.value_of("value").unwrap())?)
-            } else {
-                Ok(matches.value_of("value").map(u16::from_str).unwrap()?)
+        Command::SetVCP(SetVCP { value, table, feature_code, offset, verify }) => {
+            let value = match (value, table) {
+                (Some(value), None) => Ok(value),
+                (None, Some(table)) => Err(table),
+                _ => unreachable!(),
             };
 
             let mut exit_code = 0;
@@ -411,14 +419,14 @@ fn main_result() -> Result<i32, Error> {
 
                 if let Err(e) = (|| -> Result<(), Error> {
                     match value {
-                        Ok(value) => display.handle.set_vcp_feature(feature, value),
-                        Err(ref table) => display.handle.table_write(feature, opt_offset, &table),
+                        Ok(value) => display.handle.set_vcp_feature(feature_code, value),
+                        Err(ref table) => display.handle.table_write(feature_code, offset.unwrap_or_default(), &table),
                     }?;
 
-                    if opt_verify {
+                    if verify {
                         let matches = match value {
-                            Ok(value) => display.handle.get_vcp_feature(feature)?.value() == value,
-                            Err(ref table) => &display.handle.table_read(feature)? == table,
+                            Ok(value) => display.handle.get_vcp_feature(feature_code)?.value() == value,
+                            Err(ref table) => &display.handle.table_read(feature_code)? == table,
                         };
 
                         if !matches {
@@ -437,6 +445,5 @@ fn main_result() -> Result<i32, Error> {
 
             Ok(exit_code)
         },
-        _ => unreachable!("unknown command"),
     }
 }
