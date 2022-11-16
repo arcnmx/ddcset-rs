@@ -1,32 +1,37 @@
-{ rustPlatform
+let
+  self = import ./. { pkgs = null; system = null; };
+in {
+  rustPlatform
 , nix-gitignore
 , udev
 , python3, pkg-config
 , hostPlatform
 , lib
 , libiconv, CoreGraphics ? darwin.apple_sdk.frameworks.CoreGraphics, darwin
-, ...
-}: with lib; let
-  cargoToml = importTOML ./Cargo.toml;
-in rustPlatform.buildRustPackage {
-  pname = "ddcset";
-  version = cargoToml.package.version;
+, buildType ? "release"
+, cargoLock ? crate.cargoLock
+, source ? crate.src
+, crate ? self.lib.crate
+}: with lib; rustPlatform.buildRustPackage {
+  pname = crate.name;
+  inherit (crate) version;
 
   buildInputs =
     optionals hostPlatform.isLinux [ udev ]
     ++ optionals hostPlatform.isDarwin [ libiconv CoreGraphics ];
   nativeBuildInputs = [ pkg-config python3 ];
 
-  src = nix-gitignore.gitignoreSourcePure [ ./.gitignore ''
-    /.github
-    /.git
-    *.nix
-  '' ] ./.;
-
-  cargoSha256 = "059ckpd397prrdzc5n5hmbf3yghdfd7v8mbr1ix0z13pwj1bm4fg";
+  src = source;
+  inherit cargoLock buildType;
+  ${if cargoLock == null then "cargoSha256" else null} = "059ckpd397prrdzc5n5hmbf3yghdfd7v8mbr1ix0z13pwj1bm4fg";
   doCheck = false;
 
   meta = {
+    description = "DDC/CI display control application";
+    homepage = "https://github.com/arcnmx/ddcset-rs";
+    license = licenses.mit;
+    maintainers = [ maintainers.arcnmx ];
     platforms = platforms.unix ++ platforms.windows;
+    mainProgram = "ddcset";
   };
 }

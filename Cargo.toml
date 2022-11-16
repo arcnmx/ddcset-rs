@@ -11,6 +11,13 @@ repository = "https://github.com/arcnmx/ddcset-rs"
 readme = "README.md"
 license = "MIT"
 
+include = [
+	"/src/**.rs",
+	"/build.rs",
+	"/README*",
+	"/COPYING*",
+]
+
 [badges]
 travis-ci = { repository = "arcnmx/ddcset-rs" }
 maintenance = { status = "passively-maintained" }
