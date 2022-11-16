@@ -1,24 +1,10 @@
 { config, pkgs, lib, ... }: with pkgs; with lib; let
-  ddcset = import ./. { inherit pkgs; };
+  ddcset-rs = import ./. { inherit pkgs; };
+  inherit (ddcset-rs.packages) ddcset ddcset-w64 ddcset-static;
   artifactRoot = ".ci/artifacts";
   artifacts = "${artifactRoot}/bin/ddcset*";
-  musl64 = pkgsCross.musl64.pkgsStatic;
-  ddcset-static = (musl64.callPackage ./derivation.nix {
-    udev = (musl64.eudev.override {
-      glib = null; gperf = null; util-linux = null; kmod = null;
-    }).overrideAttrs (old: {
-      # XXX: apply hack to fix https://github.com/NixOS/nixpkgs/pull/145819
-      nativeBuildInputs = old.nativeBuildInputs ++ [ pkgs.gperf ];
-      patches = old.patches or [ ] ++ [ ./eudev-gettid.patch ];
-    });
-    inherit ((import config.channels.rust.path { pkgs = musl64; }).stable) rustPlatform;
-  }).overrideAttrs (old: {
-    # XXX: why is this needed?
-    NIX_LDFLAGS = old.NIX_LDFLAGS or "" + " -static";
-    RUSTFLAGS = old.RUSTFLAGS or "" + " -C default-linker-libraries=yes";
-  });
   ddcset-checked = (ddcset.override {
-    inherit ((import config.channels.rust.path { inherit pkgs; }).stable) rustPlatform;
+    buildType = "debug";
   }).overrideAttrs (_: {
     doCheck = true;
   });
@@ -31,21 +17,22 @@ in {
       nixpkgs = {
         # see https://github.com/arcnmx/nixexprs-rust/issues/10
         args.config.checkMetaRecursively = false;
+        version = "22.11";
       };
-      rust = "master";
     };
     tasks = {
       build.inputs = singleton ddcset-checked;
+      fmt.inputs = singleton ddcset-rs.checks.rustfmt;
     };
     jobs = {
       nixos = {
         tasks = {
-          build-windows.inputs = singleton ddcset.windows;
+          build-windows.inputs = singleton ddcset-w64;
           build-static.inputs = singleton ddcset-static;
         };
         artifactPackages = {
           musl64 = ddcset-static;
-          win64 = ddcset.windows;
+          win64 = ddcset-w64;
         };
       };
       macos = {
