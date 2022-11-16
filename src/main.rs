@@ -1,12 +1,15 @@
-use std::io::{self, Write};
-use std::str::FromStr;
-use std::process::exit;
-use clap::{Args, Parser, Subcommand};
-use anyhow::{Error, format_err};
-use log::{info, warn, error};
-use ddc_hi::{Backend, Display, Query, FeatureCode};
-use ddc_hi::traits::*;
-use mccs_db::{Access, ValueInterpretation, TableInterpretation, ValueType};
+use {
+    anyhow::{format_err, Error},
+    clap::{Args, Parser, Subcommand},
+    ddc_hi::{traits::*, Backend, Display, FeatureCode, Query},
+    log::{error, info, warn},
+    mccs_db::{Access, TableInterpretation, ValueInterpretation, ValueType},
+    std::{
+        io::{self, Write},
+        process::exit,
+        str::FromStr,
+    },
+};
 
 type HexString = Vec<u8>;
 fn parse_hex_string(s: &str) -> Result<HexString, hex::FromHexError> {
@@ -15,18 +18,14 @@ fn parse_hex_string(s: &str) -> Result<HexString, hex::FromHexError> {
 
 fn parse_feature(s: &str) -> Result<FeatureCode, Error> {
     if s.starts_with("0x") {
-        FeatureCode::from_str_radix(&s[2..], 16)
-            .map_err(Into::into)
+        FeatureCode::from_str_radix(&s[2..], 16).map_err(Into::into)
     } else {
-        FeatureCode::from_str(s)
-            .map_err(Into::into)
+        FeatureCode::from_str(s).map_err(Into::into)
     }
 }
 
 fn valid_backends() -> Vec<&'static str> {
-    Backend::values().iter()
-        .map(|b| b.name())
-        .collect()
+    Backend::values().iter().map(|b| b.name()).collect()
 }
 
 /// DDC/CI monitor control
@@ -65,9 +64,7 @@ impl Filter {
     fn query(&self) -> Query {
         let mut query = Query::Any;
         if !self.backend.is_empty() {
-            let backends = self.backend.iter().copied()
-                .map(Query::Backend)
-                .collect();
+            let backends = self.backend.iter().copied().map(Query::Backend).collect();
             query = Query::And(vec![query, Query::Or(backends)])
         }
         if let Some(id) = &self.id {
@@ -104,13 +101,11 @@ struct GlobalArgs {
 
 /// List detected displays
 #[derive(Parser, Debug)]
-struct Detect {
-}
+struct Detect {}
 
 /// Query display capabilities
 #[derive(Parser, Debug)]
-struct Capabilities {
-}
+struct Capabilities {}
 
 /// Get VCP feature value
 #[derive(Parser, Debug)]
@@ -187,7 +182,8 @@ fn main() {
 
 fn displays((query, needs_caps): (Query, bool)) -> Result<Vec<Display>, Error> {
     let mut errors = Vec::new();
-    let displays: Vec<_> = Display::enumerate_all().into_iter()
+    let displays: Vec<_> = Display::enumerate_all()
+        .into_iter()
         .filter_map(|d| match d {
             Ok(d) => Some(d),
             Err(e) => {
@@ -195,15 +191,18 @@ fn displays((query, needs_caps): (Query, bool)) -> Result<Vec<Display>, Error> {
                 errors.push(e);
                 None
             },
-        }).map(|mut d| {
+        })
+        .map(|mut d| {
             if let Err(e) = d.update_fast(needs_caps) {
                 warn!("Failed to query {}/{}: {}", d.backend(), d.id, e);
             }
             d
-        }).filter(|d| match &query {
+        })
+        .filter(|d| match &query {
             Query::Any => true,
             query => query.matches(&d.info()),
-        }).collect();
+        })
+        .collect();
 
     match errors.into_iter().next() {
         Some(e) if displays.is_empty() => Err(e.into()),
@@ -268,7 +267,11 @@ fn main_result() -> Result<i32, Error> {
                     display.update_fast(true)?;
                     let mccs_database = display.mccs_database().unwrap_or_default();
                     for feature in (0..0x100).filter_map(|v| mccs_database.get(v as _)) {
-                        println!("\tFeature 0x{:02x}: {}", feature.code, feature.name.as_ref().map(|v| &v[..]).unwrap_or("Unknown"));
+                        println!(
+                            "\tFeature 0x{:02x}: {}",
+                            feature.code,
+                            feature.name.as_ref().map(|v| &v[..]).unwrap_or("Unknown")
+                        );
                         println!("\t\tAccess: {:?}", feature.access);
                         if feature.mandatory {
                             println!("\t\tRequired");
@@ -292,11 +295,14 @@ fn main_result() -> Result<i32, Error> {
                             println!("\t\t{}", desc);
                         }
                         match feature.ty {
-                            ValueType::NonContinuous { ref values, .. } => {
+                            ValueType::NonContinuous { ref values, .. } =>
                                 for (value, name) in values {
-                                    println!("\t\t\t0x{:02x}: {}", value, name.as_ref().map(|v| &v[..]).unwrap_or("Unknown"));
-                                }
-                            },
+                                    println!(
+                                        "\t\t\t0x{:02x}: {}",
+                                        value,
+                                        name.as_ref().map(|v| &v[..]).unwrap_or("Unknown")
+                                    );
+                                },
                             _ => (),
                         }
                     }
@@ -312,7 +318,12 @@ fn main_result() -> Result<i32, Error> {
 
             Ok(exit_code)
         },
-        Command::GetVCP(GetVCP { feature_code, scan, raw, table }) => {
+        Command::GetVCP(GetVCP {
+            feature_code,
+            scan,
+            raw,
+            table,
+        }) => {
             let mut exit_code = 0;
             for mut display in displays(query)? {
                 println!("Display on {}:", display.backend());
@@ -325,7 +336,10 @@ fn main_result() -> Result<i32, Error> {
                     } else {
                         if !scan {
                             display.update_capabilities()?;
-                            (0..0x100).map(|v| v as FeatureCode).filter(|&c| mccs_database.get(c).is_some()).collect()
+                            (0..0x100)
+                                .map(|v| v as FeatureCode)
+                                .filter(|&c| mccs_database.get(c).is_some())
+                                .collect()
                         } else {
                             (0..0x100).map(|v| v as FeatureCode).collect()
                         }
@@ -347,7 +361,11 @@ fn main_result() -> Result<i32, Error> {
                                 match feature.ty {
                                     ValueType::Unknown => {
                                         let value = handle.get_vcp_feature(code)?;
-                                        println!("\tFeature 0x{:02x} = {}", code, ValueInterpretation::Continuous.format(&value));
+                                        println!(
+                                            "\tFeature 0x{:02x} = {}",
+                                            code,
+                                            ValueInterpretation::Continuous.format(&value)
+                                        );
                                     },
                                     ValueType::Continuous { mut interpretation } => {
                                         let value = handle.get_vcp_feature(code)?;
@@ -356,16 +374,28 @@ fn main_result() -> Result<i32, Error> {
                                         }
                                         println!("\tFeature 0x{:02x} = {}", feature.code, interpretation.format(&value))
                                     },
-                                    ValueType::NonContinuous { ref values, mut interpretation } => {
+                                    ValueType::NonContinuous {
+                                        ref values,
+                                        mut interpretation,
+                                    } => {
                                         if raw {
                                             interpretation = ValueInterpretation::Continuous;
                                         }
 
                                         let value = handle.get_vcp_feature(code)?;
                                         if let Some(&Some(ref name)) = values.get(&(value.value() as u8)) {
-                                            println!("\tFeature 0x{:02x} = {}: {}", feature.code, interpretation.format(&value), name)
+                                            println!(
+                                                "\tFeature 0x{:02x} = {}: {}",
+                                                feature.code,
+                                                interpretation.format(&value),
+                                                name
+                                            )
                                         } else {
-                                            println!("\tFeature 0x{:02x} = {}", feature.code, interpretation.format(&value))
+                                            println!(
+                                                "\tFeature 0x{:02x} = {}",
+                                                feature.code,
+                                                interpretation.format(&value)
+                                            )
                                         }
                                     },
                                     ValueType::Table { mut interpretation } => {
@@ -374,16 +404,30 @@ fn main_result() -> Result<i32, Error> {
                                         }
 
                                         let value = handle.table_read(code)?;
-                                        println!("\tFeature 0x{:02x} = {}", code, interpretation.format(&value).map_err(|_| format_err!("table interpretation failed"))?);
+                                        println!(
+                                            "\tFeature 0x{:02x} = {}",
+                                            code,
+                                            interpretation
+                                                .format(&value)
+                                                .map_err(|_| format_err!("table interpretation failed"))?
+                                        );
                                     },
                                 }
                             } else {
                                 if table {
                                     let value = handle.table_read(code)?;
-                                    println!("\tFeature 0x{:02x} = {}", code, TableInterpretation::Generic.format(&value).unwrap());
+                                    println!(
+                                        "\tFeature 0x{:02x} = {}",
+                                        code,
+                                        TableInterpretation::Generic.format(&value).unwrap()
+                                    );
                                 } else {
                                     let value = handle.get_vcp_feature(code)?;
-                                    println!("\tFeature 0x{:02x} = {}", code, ValueInterpretation::Continuous.format(&value));
+                                    println!(
+                                        "\tFeature 0x{:02x} = {}",
+                                        code,
+                                        ValueInterpretation::Continuous.format(&value)
+                                    );
                                 };
                             }
 
@@ -405,7 +449,13 @@ fn main_result() -> Result<i32, Error> {
 
             Ok(exit_code)
         },
-        Command::SetVCP(SetVCP { value, table, feature_code, offset, verify }) => {
+        Command::SetVCP(SetVCP {
+            value,
+            table,
+            feature_code,
+            offset,
+            verify,
+        }) => {
             let value = match (value, table) {
                 (Some(value), None) => Ok(value),
                 (None, Some(table)) => Err(table),
@@ -420,7 +470,9 @@ fn main_result() -> Result<i32, Error> {
                 if let Err(e) = (|| -> Result<(), Error> {
                     match value {
                         Ok(value) => display.handle.set_vcp_feature(feature_code, value),
-                        Err(ref table) => display.handle.table_write(feature_code, offset.unwrap_or_default(), &table),
+                        Err(ref table) => display
+                            .handle
+                            .table_write(feature_code, offset.unwrap_or_default(), &table),
                     }?;
 
                     if verify {

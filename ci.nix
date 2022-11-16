@@ -22,6 +22,7 @@ in {
     };
     tasks = {
       build.inputs = singleton ddcset-checked;
+      fmt.inputs = singleton ddcset-rs.checks.rustfmt;
     };
     jobs = {
       nixos = {

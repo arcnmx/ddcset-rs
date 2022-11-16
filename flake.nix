@@ -113,6 +113,10 @@
       };
     } { };
     checks = {
+      rustfmt = { rust'builders, ddcset }: rust'builders.check-rustfmt-unstable {
+        inherit (ddcset) src;
+        config = ./.rustfmt.toml;
+      };
     };
     lib = with nixlib; {
       crate = rust.lib.importCargo {
