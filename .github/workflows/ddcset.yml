@@ -96,7 +96,7 @@ jobs:
         out-link: .ci/artifacts
     - id: artifact-upload
       name: artifact upload
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: ddcset
         path: .ci/artifacts/bin/ddcset*
@@ -174,7 +174,7 @@ jobs:
         out-link: .ci/artifacts
     - id: artifact-upload
       name: artifact upload
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: ddcset
         path: .ci/artifacts/bin/ddcset*

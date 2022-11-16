@@ -72,7 +72,7 @@ in {
             artifact-upload = {
               order = 1110;
               name = "artifact upload";
-              uses.path = "actions/upload-artifact@v2";
+              uses.path = "actions/upload-artifact@v3";
               "with" = {
                 name = "ddcset";
                 path = artifacts;
