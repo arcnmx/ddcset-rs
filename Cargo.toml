@@ -1,8 +1,8 @@
 [package]
 name = "ddcset"
-version = "0.0.5"
+version = "0.1.0"
 authors = ["arcnmx"]
-edition = "2018"
+edition = "2021"
 
 description = "DDC/CI display control application"
 keywords = ["ddc", "vcp", "mccs", "ddccontrol", "ddcutil"]
