@@ -30,32 +30,32 @@ fn valid_backends() -> Vec<&'static str> {
 
 /// DDC/CI monitor control
 #[derive(Parser, Debug)]
-#[clap(author, version, about)]
+#[command(author, version, about)]
 struct Cli {
-	#[clap(flatten)]
+	#[command(flatten)]
 	args: GlobalArgs,
-	#[clap(flatten)]
+	#[command(flatten)]
 	filter: Filter,
-	#[clap(subcommand)]
+	#[command(subcommand)]
 	command: Command,
 }
 
 #[derive(Args, Debug)]
 struct Filter {
 	/// Backend driver whitelist
-	#[clap(short, long, number_of_values(1), possible_values(valid_backends()))]
+	#[arg(short, long, number_of_values(1), value_parser(valid_backends()))]
 	pub backend: Vec<Backend>,
 	/// Filter by matching backend ID
-	#[clap(short, long)]
+	#[arg(short, long)]
 	pub id: Option<String>,
 	/// Filter by matching manufacturer ID
-	#[clap(short = 'g', long = "mfg")]
+	#[arg(short = 'g', long = "mfg")]
 	pub manufacturer: Option<String>,
 	/// Filter by matching model
-	#[clap(short = 'l', long = "model")]
+	#[arg(short = 'l', long = "model")]
 	pub model_name: Option<String>,
 	/// Filter by matching serial number
-	#[clap(short = 'n', long = "sn")]
+	#[arg(short = 'n', long = "sn")]
 	pub serial: Option<String>,
 	// TODO: filter by index? winapi makes things difficult, nothing is identifying...
 }
@@ -95,52 +95,52 @@ impl Filter {
 #[derive(Args, Debug)]
 struct GlobalArgs {
 	/// Read display capabilities
-	#[clap(short, long)]
+	#[arg(short, long)]
 	pub capabilities: bool,
 }
 
 /// List detected displays
-#[derive(Parser, Debug)]
+#[derive(Args, Debug)]
 struct Detect {}
 
 /// Query display capabilities
-#[derive(Parser, Debug)]
+#[derive(Args, Debug)]
 struct Capabilities {}
 
 /// Get VCP feature value
-#[derive(Parser, Debug)]
+#[derive(Args, Debug)]
 struct GetVCP {
 	/// Feature code
-	#[clap(parse(try_from_str = parse_feature))]
+	#[arg(value_parser(parse_feature))]
 	pub feature_code: Vec<FeatureCode>,
 	/// Show raw value
-	#[clap(short, long)]
+	#[arg(short, long)]
 	pub raw: bool,
 	/// Read as table value
-	#[clap(short, long)]
+	#[arg(short, long)]
 	pub table: bool,
 	/// Scan all VCP feature codes
-	#[clap(short, long)]
+	#[arg(short, long)]
 	pub scan: bool,
 }
 
 /// Set VCP feature value
-#[derive(Parser, Debug)]
+#[derive(Args, Debug)]
 struct SetVCP {
 	/// Feature code
-	#[clap(parse(try_from_str = parse_feature))]
+	#[arg(value_parser(parse_feature))]
 	pub feature_code: FeatureCode,
 	/// Value to set
-	#[clap(required_unless_present = "table")]
+	#[arg(required_unless_present = "table")]
 	pub value: Option<u16>,
 	/// Read value after writing
-	#[clap(short, long)]
+	#[arg(short, long)]
 	pub verify: bool,
 	/// Write a table value
-	#[clap(short, long = "table", conflicts_with = "value", parse(try_from_str = parse_hex_string))]
+	#[arg(short, long = "table", conflicts_with = "value", value_parser(parse_hex_string))]
 	pub table: Option<HexString>,
 	/// Table write offset
-	#[clap(short, long)]
+	#[arg(short, long)]
 	pub offset: Option<u16>,
 }
 
