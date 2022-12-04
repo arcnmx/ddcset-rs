@@ -1,6 +1,6 @@
 comment_width = 100
 condense_wildcard_suffixes = true
-hard_tabs = false
+hard_tabs = true
 imports_granularity = "One"
 group_imports = "One"
 match_arm_blocks = false
@@ -12,7 +12,7 @@ normalize_comments = false
 overflow_delimited_expr = true
 reorder_impl_items = true
 reorder_modules = true
-tab_spaces = 4
+tab_spaces = 2
 trailing_semicolon = false
 unstable_features = true
 use_field_init_shorthand = true
