@@ -1,1 +1,1 @@
-{ pkgs ? import <nixpkgs> { } }: (import ./. { inherit pkgs; }).shell
+{ pkgs ? import <nixpkgs> { } }@args: (import ./. args).devShells.default
