@@ -26,6 +26,10 @@ directly from source:
 
     cargo install --force ddcset
 
+### Development Builds
+
+Every pushed commit produces an associated build available for
+[download from GitHub Actions](https://github.com/arcnmx/ddcset-rs/actions).
 
 ## NVIDIA drivers on Linux
 
