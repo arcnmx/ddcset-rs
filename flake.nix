@@ -26,6 +26,7 @@
       , CoreGraphics ? darwin.apple_sdk.frameworks.CoreGraphics, darwin
       , enableRust ? true, cargo
       , rustTools ? [ ]
+      , nativeBuildInputs ? [ ]
       }: mkShell {
         inherit rustTools;
         buildInputs =
@@ -33,15 +34,16 @@
           ++ nixlib.optionals hostPlatform.isDarwin [ libiconv CoreGraphics ];
         nativeBuildInputs = [ pkg-config python3 ]
           ++ nixlib.optional enableRust cargo
-          ++ [
+          ++ nativeBuildInputs ++ [
             (writeShellScriptBin "generate" ''nix run .#generate "$@"'')
           ];
+        RUST_LOG = "ddc=debug";
       };
       stable = { rust'stable, outputs'devShells'plain }: outputs'devShells'plain.override {
         inherit (rust'stable) mkShell;
         enableRust = false;
       };
-      dev = { arc'rustPlatforms'nightly, rust'distChannel, rust-w64-overlay, outputs'devShells'plain }: let
+      dev = { arc'rustPlatforms'nightly, rust'distChannel, rust-w64-overlay, rust-w64, outputs'devShells'plain }: let
         channel = rust'distChannel {
           inherit (arc'rustPlatforms'nightly) channel date manifestPath;
           channelOverlays = [ rust-w64-overlay ];
@@ -50,6 +52,7 @@
         inherit (channel) mkShell;
         enableRust = false;
         rustTools = [ "rust-analyzer" ];
+        nativeBuildInputs = [ rust-w64.pkgs.stdenv.cc.bintools ];
       };
       default = { outputs'devShells }: outputs'devShells.plain;
     };
