@@ -1,9 +1,9 @@
 { config, pkgs, lib, ... }: with pkgs; with lib; let
   ddcset-rs = import ./. { inherit pkgs; };
-  inherit (ddcset-rs.packages) ddcset ddcset-w64 ddcset-static;
+  inherit (ddcset-rs) checks packages;
   artifactRoot = ".ci/artifacts";
   artifacts = "${artifactRoot}/bin/ddcset*";
-  ddcset-checked = (ddcset.override {
+  ddcset-checked = (packages.ddcset.override {
     buildType = "debug";
   }).overrideAttrs (_: {
     doCheck = true;
@@ -22,17 +22,17 @@ in {
     };
     tasks = {
       build.inputs = singleton ddcset-checked;
-      fmt.inputs = singleton ddcset-rs.checks.rustfmt;
+      fmt.inputs = singleton checks.rustfmt;
     };
     jobs = {
       nixos = {
         tasks = {
-          build-windows.inputs = singleton ddcset-w64;
-          build-static.inputs = singleton ddcset-static;
+          build-windows.inputs = singleton packages.ddcset-w64;
+          build-static.inputs = singleton packages.ddcset-static;
         };
         artifactPackages = {
-          musl64 = ddcset-static;
-          win64 = ddcset-w64;
+          musl64 = packages.ddcset-static;
+          win64 = packages.ddcset-w64;
         };
       };
       macos = {

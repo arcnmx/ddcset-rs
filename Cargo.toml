@@ -31,9 +31,9 @@ lto = true
 
 [dependencies]
 ddc-hi = { version = "0.5", git = "https://github.com/arcnmx/ddc-hi-rs", branch = "v0.5.x" }
+mccs-db = { version = "0.2", git = "https://github.com/arcnmx/mccs-rs", branch = "v0.2.x" }
 clap = { version = "^4", features = ["derive"] }
 anyhow = "1"
 env_logger = "0.10"
 log = "0.4"
-mccs-db = "0.1"
 hex = "0.4"
