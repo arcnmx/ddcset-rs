@@ -1,9 +1,10 @@
 use {
 	anyhow::{format_err, Error},
-	clap::{Args, Parser, Subcommand},
+	clap::{builder::TypedValueParser, Args, Parser, Subcommand},
 	ddc_hi::{traits::*, Backend, Display, FeatureCode, Query},
 	log::{error, info, warn},
 	mccs_db::{Access, TableInterpretation, ValueInterpretation, ValueType},
+	once_cell::sync::Lazy,
 	std::{
 		io::{self, Write},
 		process::exit,
@@ -24,8 +25,24 @@ fn parse_feature(s: &str) -> Result<FeatureCode, Error> {
 	}
 }
 
-fn valid_backends() -> Vec<&'static str> {
-	Backend::values().iter().map(|b| b.name()).collect()
+fn backend_parser() -> impl TypedValueParser {
+	clap::builder::PossibleValuesParser::from(Backend::values().iter().map(|b| b.name()))
+		.try_map(|s| Backend::from_str(&s))
+}
+
+#[derive(Copy, Clone, Debug)]
+struct BackendValue(Backend);
+
+impl clap::ValueEnum for BackendValue {
+	fn value_variants<'a>() -> &'a [Self] {
+		static VALID_BACKENDS: Lazy<Vec<BackendValue>> =
+			Lazy::new(|| Backend::values().iter().cloned().map(BackendValue).collect());
+		&VALID_BACKENDS
+	}
+
+	fn to_possible_value(&self) -> Option<clap::builder::PossibleValue> {
+		Some(self.0.name().into())
+	}
 }
 
 /// DDC/CI monitor control
@@ -43,7 +60,7 @@ struct Cli {
 #[derive(Args, Debug)]
 struct Filter {
 	/// Backend driver whitelist
-	#[arg(short, long, number_of_values(1), value_parser(valid_backends()))]
+	#[arg(short, long, number_of_values(1), value_parser(backend_parser()))]
 	pub backend: Vec<Backend>,
 	/// Filter by matching backend ID
 	#[arg(short, long)]

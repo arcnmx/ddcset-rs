@@ -196,6 +196,7 @@ dependencies = [
  "hex",
  "log",
  "mccs-db",
+ "once_cell",
 ]
 
 [[package]]
