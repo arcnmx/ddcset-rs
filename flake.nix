@@ -65,12 +65,10 @@
       };
       ddcset-w64 = { pkgsCross'mingwW64, rust-w64, source }: pkgsCross'mingwW64.callPackage ./derivation.nix {
         inherit (rust-w64.latest) rustPlatform;
-        cargoLock = null;
         inherit source;
       };
       ddcset-static = { pkgsCross'musl64'pkgsStatic, eudev-musl64, source }: (pkgsCross'musl64'pkgsStatic.callPackage ./derivation.nix {
         inherit ((import inputs.rust { pkgs = pkgsCross'musl64'pkgsStatic; }).latest) rustPlatform;
-        cargoLock = null;
         udev = eudev-musl64;
         inherit source;
       }).overrideAttrs (old: {
