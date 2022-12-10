@@ -136,7 +136,7 @@ dependencies = [
 [[package]]
 name = "ddc-hi"
 version = "0.5.0"
-source = "git+https://github.com/arcnmx/ddc-hi-rs?branch=v0.5.x#b8eca4b6c3476af03202e44748fb8414da8b3176"
+source = "git+https://github.com/arcnmx/ddc-hi-rs?branch=v0.5.x#b60c6617f78ba481df722e8fa2bf9f083b68ccce"
 dependencies = [
  "ddc",
  "ddc-i2c",
@@ -178,11 +178,13 @@ dependencies = [
 [[package]]
 name = "ddc-winapi"
 version = "0.3.0"
-source = "git+https://github.com/arcnmx/ddc-winapi-rs?branch=v0.3.x#6051f81f900594289bd4b8ea998fa07186acf47f"
+source = "git+https://github.com/arcnmx/ddc-winapi-rs?branch=v0.3.x#b9bea05034f200c447ba1af4d91c714dc559b254"
 dependencies = [
+ "bitflags",
  "ddc",
+ "log",
  "widestring",
- "winapi",
+ "windows",
 ]
 
 [[package]]
@@ -759,6 +761,21 @@ name = "winapi-x86_64-pc-windows-gnu"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
+
+[[package]]
+name = "windows"
+version = "0.43.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "04662ed0e3e5630dfa9b26e4cb823b817f1a9addda855d973a9458c236556244"
+dependencies = [
+ "windows_aarch64_gnullvm",
+ "windows_aarch64_msvc",
+ "windows_i686_gnu",
+ "windows_i686_msvc",
+ "windows_x86_64_gnu",
+ "windows_x86_64_gnullvm",
+ "windows_x86_64_msvc",
+]
 
 [[package]]
 name = "windows-sys"
