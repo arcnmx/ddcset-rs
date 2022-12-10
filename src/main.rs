@@ -2,7 +2,7 @@ use {
 	anyhow::{format_err, Error},
 	clap::{builder::TypedValueParser, Args, Parser, Subcommand},
 	ddc_hi::{traits::*, Backend, Display, FeatureCode, Query},
-	log::{error, info, warn},
+	log::{debug, error, warn},
 	mccs_db::{Access, TableInterpretation, ValueInterpretation, ValueType},
 	once_cell::sync::Lazy,
 	std::{
@@ -180,7 +180,7 @@ impl DisplaySleep {
 
 impl Drop for DisplaySleep {
 	fn drop(&mut self) {
-		info!("Waiting for display communication delays before exit");
+		debug!("Waiting for display communication delays before exit");
 		for display in self.0.iter_mut() {
 			display.handle.sleep()
 		}
@@ -227,8 +227,20 @@ fn displays((query, needs_caps): (Query, bool)) -> Result<Vec<Display>, Error> {
 	}
 }
 
+fn log_init() {
+	use {
+		env_logger::{Builder, Env},
+		log::LevelFilter,
+	};
+
+	Builder::new()
+		.filter_level(LevelFilter::Warn)
+		.parse_env(Env::default())
+		.init()
+}
+
 fn main_result() -> Result<i32, Error> {
-	env_logger::init();
+	log_init();
 
 	let Cli { args, command, filter } = Cli::parse();
 
