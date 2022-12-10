@@ -7,8 +7,13 @@ use {
 	once_cell::sync::Lazy,
 	std::{
 		io::{self, Write},
+		iter,
 		process::exit,
 		str::FromStr,
+		sync::{
+			atomic::{AtomicUsize, Ordering},
+			Arc, Mutex,
+		},
 	},
 };
 
@@ -197,34 +202,52 @@ fn main() {
 	}
 }
 
-fn displays((query, needs_caps): (Query, bool)) -> Result<Vec<Display>, Error> {
-	let mut errors = Vec::new();
-	let displays: Vec<_> = Display::enumerate_all()
+fn displays((query, needs_caps): (Query, bool)) -> impl Iterator<Item = Result<Display, Error>> {
+	let errors = Arc::new(Mutex::new(Vec::new()));
+	let display_count = Arc::new(AtomicUsize::new(0));
+
+	Display::enumerate_all()
 		.into_iter()
-		.filter_map(|d| match d {
-			Ok(d) => Some(d),
-			Err(e) => {
-				warn!("Failed to enumerate {}: {}", e.backend(), e);
-				errors.push(e);
-				None
-			},
+		.filter_map({
+			let errors = errors.clone();
+			move |d| match d {
+				Ok(d) => Some(d),
+				Err(e) => {
+					warn!("Failed to enumerate {}: {}", e.backend(), e);
+					errors.lock().unwrap().push(e);
+					None
+				},
+			}
 		})
-		.map(|mut d| {
+		.filter_map(move |mut d| {
+			if !needs_caps && query.matches(&d.info()) {
+				return Some(d)
+			}
+
 			if let Err(e) = d.update_fast(needs_caps) {
 				warn!("Failed to query {}/{}: {}", d.backend(), d.id, e);
 			}
-			d
-		})
-		.filter(|d| match &query {
-			Query::Any => true,
-			query => query.matches(&d.info()),
-		})
-		.collect();
 
-	match errors.into_iter().next() {
-		Some(e) if displays.is_empty() => Err(e.into()),
-		_ => Ok(displays),
-	}
+			match query.matches(&d.info()) {
+				true => Some(d),
+				false => None,
+			}
+		})
+		.map({
+			let display_count = display_count.clone();
+			move |v| {
+				display_count.fetch_add(1, Ordering::AcqRel);
+
+				Ok(v)
+			}
+		})
+		.chain(iter::from_fn(move || match display_count.load(Ordering::Acquire) {
+			0 => Some(Err(match errors.lock().unwrap().drain(..).next() {
+				Some(e) => e.into(),
+				None => format_err!("no matching displays found"),
+			})),
+			_ => None,
+		}))
 }
 
 fn log_init() {
@@ -251,11 +274,13 @@ fn main_result() -> Result<i32, Error> {
 
 	match command {
 		Command::Detect(cmd) => {
-			for mut display in displays(query)? {
+			for display in displays(query) {
+				let mut display = display?;
 				{
 					println!("Display on {}:", display.backend());
 					println!("\tID: {}", display.id);
 
+					display.update_fast(false)?;
 					let info = display.info();
 					let res = if args.capabilities {
 						display.update_all()
@@ -289,7 +314,8 @@ fn main_result() -> Result<i32, Error> {
 		},
 		Command::Capabilities(cmd) => {
 			let mut exit_code = 0;
-			for mut display in displays(query)? {
+			for display in displays(query) {
+				let mut display = display?;
 				if let Err(e) = (|| -> Result<(), Error> {
 					println!("Display on {}:", display.backend());
 					println!("\tID: {}", display.id);
@@ -354,7 +380,8 @@ fn main_result() -> Result<i32, Error> {
 			table,
 		}) => {
 			let mut exit_code = 0;
-			for mut display in displays(query)? {
+			for display in displays(query) {
+				let mut display = display?;
 				println!("Display on {}:", display.backend());
 				println!("\tID: {}", display.id);
 				if let Err(e) = (|| -> Result<(), Error> {
@@ -488,7 +515,8 @@ fn main_result() -> Result<i32, Error> {
 			};
 
 			let mut exit_code = 0;
-			for mut display in displays(query)? {
+			for display in displays(query) {
+				let mut display = display?;
 				println!("Display on {}:", display.backend());
 				println!("\tID: {}", display.id);
 
