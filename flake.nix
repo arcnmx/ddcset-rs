@@ -7,10 +7,6 @@
       url = "github:arcnmx/nixexprs-rust";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    arc = {
-      url = "github:arcnmx/nixexprs";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
   outputs = { self, flakelib, nixpkgs, rust, ... }@inputs: let
     nixlib = nixpkgs.lib;
@@ -43,9 +39,8 @@
         inherit (rust'stable) mkShell;
         enableRust = false;
       };
-      dev = { arc'rustPlatforms'nightly, rust'distChannel, rust-w64-overlay, rust-w64, outputs'devShells'plain }: let
-        channel = rust'distChannel {
-          inherit (arc'rustPlatforms'nightly) channel date manifestPath;
+      dev = { rust'unstable, rust-w64-overlay, rust-w64, outputs'devShells'plain }: let
+        channel = rust'unstable.override {
           channelOverlays = [ rust-w64-overlay ];
         };
       in outputs'devShells'plain.override {
