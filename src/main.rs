@@ -1,6 +1,6 @@
 use {
 	crate::{capabilities::Capabilities, detect::Detect, getvcp::GetVCP, setvcp::SetVCP},
-	anyhow::{format_err, Error},
+	anyhow::{anyhow, Error},
 	clap::{Args, Parser, Subcommand},
 	ddc_hi::{traits::*, Backend, Display, Query},
 	log::{debug, warn},
@@ -170,7 +170,7 @@ pub(crate) fn displays((query, needs_caps): (Query, bool)) -> impl Iterator<Item
 		.chain(iter::from_fn(move || match display_count.load(Ordering::Acquire) {
 			0 => Some(Err(match errors.lock().unwrap().drain(..).next() {
 				Some(e) => e.into(),
-				None => format_err!("no matching displays found"),
+				None => anyhow!("no matching displays found"),
 			})),
 			_ => None,
 		}))

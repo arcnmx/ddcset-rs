@@ -1,6 +1,6 @@
 use {
 	crate::{displays, util, DisplaySleep, GlobalArgs},
-	anyhow::{format_err, Error},
+	anyhow::{anyhow, Error},
 	clap::Args,
 	ddc_hi::{traits::*, FeatureCode, Query},
 	log::error,
@@ -114,7 +114,7 @@ impl GetVCP {
 										code,
 										interpretation
 											.format(&value)
-											.map_err(|_| format_err!("table interpretation failed"))?
+											.map_err(|_| anyhow!("table interpretation failed"))?
 									);
 								},
 							}

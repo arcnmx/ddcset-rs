@@ -1,6 +1,6 @@
 use {
 	crate::{displays, util, DisplaySleep, GlobalArgs},
-	anyhow::{format_err, Error},
+	anyhow::{anyhow, Error},
 	clap::Args,
 	ddc_hi::{traits::*, FeatureCode, Query},
 	log::error,
@@ -67,7 +67,7 @@ impl SetVCP {
 					};
 
 					if !matches {
-						return Err(format_err!("Verification failed"))
+						return Err(anyhow!("Verification failed"))
 					}
 				}
 
