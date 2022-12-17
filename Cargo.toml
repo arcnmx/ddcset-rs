@@ -30,7 +30,7 @@ opt-level = 2
 lto = true
 
 [dependencies]
-ddc-hi = { version = "0.5", git = "https://github.com/arcnmx/ddc-hi-rs", branch = "v0.5.x" }
+ddc-hi = { version = "0.5", features = ["log-kv"], git = "https://github.com/arcnmx/ddc-hi-rs", branch = "v0.5.x" }
 mccs-db = { version = "0.2", git = "https://github.com/arcnmx/mccs-rs", branch = "v0.2.x" }
 clap = { version = "^4", features = ["derive"] }
 anyhow = "1"

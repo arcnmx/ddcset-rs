@@ -3,7 +3,7 @@ use {
 	clap::Args,
 	ddc_hi::Display,
 	ddcset::{Config, DisplayCommand},
-	log::warn,
+	log::{as_error, warn},
 };
 
 /// List detected displays
@@ -18,7 +18,13 @@ impl DisplayCommand for Detect {
 		println!("\tID: {}", display.id);
 
 		if let Err(e) = display.update_fast(false) {
-			warn!("failed to retrieve display info: {:?}", e);
+			warn!(
+				command = "detect",
+				operation = "update_fast",
+				error = as_error!(e),
+				display = display;
+				"failed to retrieve {display} info: {e}"
+			);
 		}
 
 		let info = display.info();
@@ -28,7 +34,13 @@ impl DisplayCommand for Detect {
 			Ok(drop(display.update_version()))
 		};
 		if let Err(e) = res {
-			warn!("Failed to query display: {}", e);
+			warn!(
+				command = "detect",
+				operation = "update_all",
+				error = as_error!(e),
+				display = display;
+				"Failed to query {display}: {e}"
+			);
 		}
 
 		if let Some(value) = info.manufacturer_id.as_ref() {

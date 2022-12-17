@@ -3,8 +3,8 @@ use {
 	clap::Args,
 	ddc_hi::{traits::*, Display, FeatureCode},
 	ddcset::{Config, DisplayCommand},
-	log::error,
-	mccs_db::{Access, Database, TableInterpretation, ValueInterpretation, ValueType},
+	log::{as_debug, error},
+	mccs_db::{Access, Descriptor, TableInterpretation, ValueInterpretation, ValueType},
 };
 
 /// Get VCP feature value
@@ -25,8 +25,7 @@ pub struct GetVCP {
 }
 
 impl GetVCP {
-	fn get_code(&mut self, display: &mut Display, mccs_database: &Database, code: FeatureCode) -> Result<(), Error> {
-		let feature = mccs_database.get(code);
+	fn get_code(&mut self, display: &mut Display, code: FeatureCode, feature: Option<&Descriptor>) -> Result<(), Error> {
 		let handle = &mut display.handle;
 		if let Some(feature) = feature {
 			if feature.access == Access::WriteOnly {
@@ -134,8 +133,18 @@ impl DisplayCommand for GetVCP {
 
 		let mut errors = Vec::new();
 		for code in codes {
-			if let Err(e) = self.get_code(display, &mccs_database, code) {
-				error!(target: "ddcset::get-vcp", "Failed to get feature: {e:?}");
+			let feature = mccs_database.get(code);
+			if let Err(e) = self.get_code(display, code, feature) {
+				error!(
+					target: "ddcset::get-vcp",
+					command = "get-vcp",
+					operation = "get_vcp_feature",
+					feature_code = code,
+					feature = as_debug!(feature),
+					error = as_debug!(e),
+					display = display;
+					"Failed to get feature 0x{code:02x} for {display}: {e}"
+				);
 				errors.push(e);
 			}
 		}

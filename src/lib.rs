@@ -1,7 +1,7 @@
 use {
 	anyhow::{anyhow, Error},
 	ddc_hi::{traits::*, Display, Query},
-	log::{debug, error, warn},
+	log::{as_debug, debug, error, warn},
 	std::{
 		iter,
 		sync::{
@@ -40,7 +40,11 @@ impl<T: DisplayCommand> CliCommand for T {
 				Err(e) => {
 					error!(
 						target: &format!("ddcset::{}", Self::NAME),
-						"failed to process display: {e:?}"
+						command = Self::NAME,
+						operation = "process",
+						error = as_debug!(e),
+						display = display;
+						"failed to process {display}: {e}"
 					);
 					errors.push(e);
 				},
