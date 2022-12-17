@@ -18,7 +18,10 @@ impl Detect {
 				println!("Display on {}:", display.backend());
 				println!("\tID: {}", display.id);
 
-				display.update_fast(false)?;
+				if let Err(e) = display.update_fast(false) {
+					warn!("failed to retrieve display info: {:?}", e);
+				}
+
 				let info = display.info();
 				let res = if args.capabilities {
 					display.update_all()
