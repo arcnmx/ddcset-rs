@@ -1,17 +1,12 @@
 use {
 	crate::{capabilities::Capabilities, detect::Detect, getvcp::GetVCP, save::SaveCurrentSettings, setvcp::SetVCP},
-	anyhow::{anyhow, Error},
+	anyhow::Error,
 	clap::{Args, Parser, Subcommand},
-	ddc_hi::{traits::*, Backend, Display, Query},
-	log::{debug, warn},
+	ddc_hi::{Backend, Query},
+	ddcset::{CliCommand, Config, DisplaySleep},
 	std::{
 		io::{self, Write},
-		iter,
 		process::exit,
-		sync::{
-			atomic::{AtomicUsize, Ordering},
-			Arc, Mutex,
-		},
 	},
 };
 
@@ -106,24 +101,6 @@ enum Command {
 	SaveCurrentSettings(SaveCurrentSettings),
 }
 
-#[derive(Default)]
-pub struct DisplaySleep(Vec<Display>);
-
-impl DisplaySleep {
-	fn add(&mut self, display: Display) {
-		self.0.push(display)
-	}
-}
-
-impl Drop for DisplaySleep {
-	fn drop(&mut self) {
-		debug!("Waiting for display communication delays before exit");
-		for display in self.0.iter_mut() {
-			display.handle.sleep()
-		}
-	}
-}
-
 fn main() {
 	match main_result() {
 		Ok(code) => exit(code),
@@ -132,54 +109,6 @@ fn main() {
 			exit(1);
 		},
 	}
-}
-
-pub(crate) fn displays((query, needs_caps): (Query, bool)) -> impl Iterator<Item = Result<Display, Error>> {
-	let errors = Arc::new(Mutex::new(Vec::new()));
-	let display_count = Arc::new(AtomicUsize::new(0));
-
-	Display::enumerate_all()
-		.into_iter()
-		.filter_map({
-			let errors = errors.clone();
-			move |d| match d {
-				Ok(d) => Some(d),
-				Err(e) => {
-					warn!("Failed to enumerate {}: {}", e.backend(), e);
-					errors.lock().unwrap().push(e);
-					None
-				},
-			}
-		})
-		.filter_map(move |mut d| {
-			if !needs_caps && query.matches(&d.info()) {
-				return Some(d)
-			}
-
-			if let Err(e) = d.update_fast(needs_caps) {
-				warn!("Failed to query {}/{}: {}", d.backend(), d.id, e);
-			}
-
-			match query.matches(&d.info()) {
-				true => Some(d),
-				false => None,
-			}
-		})
-		.map({
-			let display_count = display_count.clone();
-			move |v| {
-				display_count.fetch_add(1, Ordering::AcqRel);
-
-				Ok(v)
-			}
-		})
-		.chain(iter::from_fn(move || match display_count.load(Ordering::Acquire) {
-			0 => Some(Err(match errors.lock().unwrap().drain(..).next() {
-				Some(e) => e.into(),
-				None => anyhow!("no matching displays found"),
-			})),
-			_ => None,
-		}))
 }
 
 fn log_init() {
@@ -199,16 +128,20 @@ fn main_result() -> Result<i32, Error> {
 
 	let Cli { args, command, filter } = Cli::parse();
 
-	let query = (filter.query(), filter.needs_caps());
-	// TODO: filter.needs_edid()
+	let config = Config {
+		query: filter.query(),
+		needs_caps: filter.needs_caps(),
+		needs_edid: filter.needs_edid(),
+		request_caps: args.capabilities,
+	};
 
 	let mut sleep = DisplaySleep::default();
 
 	match command {
-		Command::Detect(cmd) => cmd.run(&mut sleep, args, query),
-		Command::Capabilities(cmd) => cmd.run(&mut sleep, args, query),
-		Command::GetVCP(cmd) => cmd.run(&mut sleep, args, query),
-		Command::SetVCP(cmd) => cmd.run(&mut sleep, args, query),
-		Command::SaveCurrentSettings(cmd) => cmd.run(&mut sleep, args, query),
+		Command::Detect(mut cmd) => cmd.run(&mut sleep, &config),
+		Command::Capabilities(mut cmd) => cmd.run(&mut sleep, &config),
+		Command::GetVCP(mut cmd) => cmd.run(&mut sleep, &config),
+		Command::SetVCP(mut cmd) => cmd.run(&mut sleep, &config),
+		Command::SaveCurrentSettings(mut cmd) => cmd.run(&mut sleep, &config),
 	}
 }

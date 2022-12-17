@@ -1,8 +1,8 @@
 use {
-	crate::{displays, DisplaySleep, GlobalArgs},
 	anyhow::Error,
 	clap::Args,
-	ddc_hi::Query,
+	ddc_hi::Display,
+	ddcset::{Config, DisplayCommand},
 	log::warn,
 };
 
@@ -10,47 +10,42 @@ use {
 #[derive(Args, Debug)]
 pub struct Detect {}
 
-impl Detect {
-	pub fn run(self, sleep: &mut DisplaySleep, args: GlobalArgs, query: (Query, bool)) -> Result<i32, Error> {
-		for display in displays(query) {
-			let mut display = display?;
-			{
-				println!("Display on {}:", display.backend());
-				println!("\tID: {}", display.id);
+impl DisplayCommand for Detect {
+	const NAME: &'static str = "detect";
 
-				if let Err(e) = display.update_fast(false) {
-					warn!("failed to retrieve display info: {:?}", e);
-				}
+	fn process(&mut self, args: &Config, display: &mut Display) -> Result<(), Error> {
+		println!("Display on {}:", display.backend());
+		println!("\tID: {}", display.id);
 
-				let info = display.info();
-				let res = if args.capabilities {
-					display.update_all()
-				} else {
-					Ok(drop(display.update_version()))
-				};
-				if let Err(e) = res {
-					warn!("Failed to query display: {}", e);
-				}
-
-				if let Some(value) = info.manufacturer_id.as_ref() {
-					println!("\tManufacturer ID: {}", value);
-				}
-				if let Some(value) = info.model_name.as_ref() {
-					println!("\tModel: {}", value);
-				}
-				if let Some(value) = info.serial_number.as_ref() {
-					println!("\tSerial: {}", value);
-				}
-				if let Some(value) = info.mccs_version.as_ref() {
-					println!("\tMCCS: {}", value);
-				} else {
-					println!("\tMCCS: Unavailable");
-				}
-			}
-
-			sleep.add(display);
+		if let Err(e) = display.update_fast(false) {
+			warn!("failed to retrieve display info: {:?}", e);
 		}
 
-		Ok(0)
+		let info = display.info();
+		let res = if args.request_caps {
+			display.update_all()
+		} else {
+			Ok(drop(display.update_version()))
+		};
+		if let Err(e) = res {
+			warn!("Failed to query display: {}", e);
+		}
+
+		if let Some(value) = info.manufacturer_id.as_ref() {
+			println!("\tManufacturer ID: {}", value);
+		}
+		if let Some(value) = info.model_name.as_ref() {
+			println!("\tModel: {}", value);
+		}
+		if let Some(value) = info.serial_number.as_ref() {
+			println!("\tSerial: {}", value);
+		}
+		if let Some(value) = info.mccs_version.as_ref() {
+			println!("\tMCCS: {}", value);
+		} else {
+			println!("\tMCCS: Unavailable");
+		}
+
+		Ok(())
 	}
 }
