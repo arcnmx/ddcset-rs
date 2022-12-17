@@ -96,9 +96,13 @@ pub struct GlobalArgs {
 #[derive(Subcommand, Debug)]
 enum Command {
 	Detect(Detect),
+	#[command(alias = "caps")]
 	Capabilities(Capabilities),
+	#[command(alias = "getvcp", alias = "get")]
 	GetVCP(GetVCP),
+	#[command(alias = "setvcp", alias = "set")]
 	SetVCP(SetVCP),
+	#[command(alias = "save")]
 	SaveCurrentSettings(SaveCurrentSettings),
 }
 
