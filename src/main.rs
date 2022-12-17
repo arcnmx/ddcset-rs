@@ -1,5 +1,5 @@
 use {
-	crate::{capabilities::Capabilities, detect::Detect, getvcp::GetVCP, setvcp::SetVCP},
+	crate::{capabilities::Capabilities, detect::Detect, getvcp::GetVCP, save::SaveCurrentSettings, setvcp::SetVCP},
 	anyhow::{anyhow, Error},
 	clap::{Args, Parser, Subcommand},
 	ddc_hi::{traits::*, Backend, Display, Query},
@@ -18,6 +18,7 @@ use {
 mod capabilities;
 mod detect;
 mod getvcp;
+mod save;
 mod setvcp;
 mod util;
 
@@ -98,6 +99,7 @@ enum Command {
 	Capabilities(Capabilities),
 	GetVCP(GetVCP),
 	SetVCP(SetVCP),
+	SaveCurrentSettings(SaveCurrentSettings),
 }
 
 #[derive(Default)]
@@ -203,5 +205,6 @@ fn main_result() -> Result<i32, Error> {
 		Command::Capabilities(cmd) => cmd.run(&mut sleep, args, query),
 		Command::GetVCP(cmd) => cmd.run(&mut sleep, args, query),
 		Command::SetVCP(cmd) => cmd.run(&mut sleep, args, query),
+		Command::SaveCurrentSettings(cmd) => cmd.run(&mut sleep, args, query),
 	}
 }
