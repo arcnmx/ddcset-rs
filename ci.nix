@@ -11,7 +11,10 @@
 in {
   config = {
     name = "ddcset";
-    ci.gh-actions.enable = true;
+    ci = {
+      version = "v0.6";
+      gh-actions.enable = true;
+    };
     cache.cachix.arc.enable = true;
     channels = {
       nixpkgs = {

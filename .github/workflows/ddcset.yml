@@ -9,21 +9,21 @@ jobs:
     steps:
     - id: checkout
       name: git clone
-      uses: actions/checkout@v1
+      uses: actions/checkout@v3
       with:
         submodules: true
     - id: nix-install
       name: nix install
-      uses: arcnmx/ci/actions/nix/install@master
+      uses: arcnmx/ci/actions/nix/install@v0.6
     - id: ci-action-build
       name: nix build ci.gh-actions.configFile
-      uses: arcnmx/ci/actions/nix/build@master
+      uses: arcnmx/ci/actions/nix/build@v0.6
       with:
         attrs: ci.gh-actions.configFile
         out-link: .ci/workflow.yml
     - id: ci-action-compare
       name: gh-actions compare
-      uses: arcnmx/ci/actions/nix/run@master
+      uses: arcnmx/ci/actions/nix/run@v0.6
       with:
         args: -u .github/workflows/ddcset.yml .ci/workflow.yml
         attrs: nixpkgs.diffutils
@@ -32,25 +32,25 @@ jobs:
     name: ddcset-macos
     permissions:
       contents: write
-    runs-on: macos-10.15
+    runs-on: macos-latest
     steps:
     - id: checkout
       name: git clone
-      uses: actions/checkout@v1
+      uses: actions/checkout@v3
       with:
         submodules: true
     - id: nix-install
       name: nix install
-      uses: arcnmx/ci/actions/nix/install@master
+      uses: arcnmx/ci/actions/nix/install@v0.6
     - id: ci-setup
       name: nix setup
-      uses: arcnmx/ci/actions/nix/run@master
+      uses: arcnmx/ci/actions/nix/run@v0.6
       with:
         attrs: ci.job.macos.run.setup
         quiet: false
     - id: ci-dirty
       name: nix test dirty
-      uses: arcnmx/ci/actions/nix/run@master
+      uses: arcnmx/ci/actions/nix/run@v0.6
       with:
         attrs: ci.job.macos.run.test
         command: ci-build-dirty
@@ -58,7 +58,7 @@ jobs:
         stdout: ${{ runner.temp }}/ci.build.dirty
     - id: ci-test
       name: nix test build
-      uses: arcnmx/ci/actions/nix/run@master
+      uses: arcnmx/ci/actions/nix/run@v0.6
       with:
         attrs: ci.job.macos.run.test
         command: ci-build-realise
@@ -69,7 +69,7 @@ jobs:
         CI_EXIT_CODE: ${{ steps.ci-test.outputs.exit-code }}
       id: ci-summary
       name: nix test results
-      uses: arcnmx/ci/actions/nix/run@master
+      uses: arcnmx/ci/actions/nix/run@v0.6
       with:
         attrs: ci.job.macos.run.test
         command: ci-build-summarise
@@ -81,7 +81,7 @@ jobs:
       id: ci-cache
       if: always()
       name: nix test cache
-      uses: arcnmx/ci/actions/nix/run@master
+      uses: arcnmx/ci/actions/nix/run@v0.6
       with:
         attrs: ci.job.macos.run.test
         command: ci-build-cache
@@ -89,7 +89,7 @@ jobs:
         stdin: ${{ runner.temp }}/ci.build.cache
     - id: artifact-build
       name: artifact build
-      uses: arcnmx/ci/actions/nix/build@master
+      uses: arcnmx/ci/actions/nix/build@v0.6
       with:
         attrs: config.jobs.macos.artifactPackage
         file: <ci>
@@ -114,21 +114,21 @@ jobs:
     steps:
     - id: checkout
       name: git clone
-      uses: actions/checkout@v1
+      uses: actions/checkout@v3
       with:
         submodules: true
     - id: nix-install
       name: nix install
-      uses: arcnmx/ci/actions/nix/install@master
+      uses: arcnmx/ci/actions/nix/install@v0.6
     - id: ci-setup
       name: nix setup
-      uses: arcnmx/ci/actions/nix/run@master
+      uses: arcnmx/ci/actions/nix/run@v0.6
       with:
         attrs: ci.job.nixos.run.setup
         quiet: false
     - id: ci-dirty
       name: nix test dirty
-      uses: arcnmx/ci/actions/nix/run@master
+      uses: arcnmx/ci/actions/nix/run@v0.6
       with:
         attrs: ci.job.nixos.run.test
         command: ci-build-dirty
@@ -136,7 +136,7 @@ jobs:
         stdout: ${{ runner.temp }}/ci.build.dirty
     - id: ci-test
       name: nix test build
-      uses: arcnmx/ci/actions/nix/run@master
+      uses: arcnmx/ci/actions/nix/run@v0.6
       with:
         attrs: ci.job.nixos.run.test
         command: ci-build-realise
@@ -147,7 +147,7 @@ jobs:
         CI_EXIT_CODE: ${{ steps.ci-test.outputs.exit-code }}
       id: ci-summary
       name: nix test results
-      uses: arcnmx/ci/actions/nix/run@master
+      uses: arcnmx/ci/actions/nix/run@v0.6
       with:
         attrs: ci.job.nixos.run.test
         command: ci-build-summarise
@@ -159,7 +159,7 @@ jobs:
       id: ci-cache
       if: always()
       name: nix test cache
-      uses: arcnmx/ci/actions/nix/run@master
+      uses: arcnmx/ci/actions/nix/run@v0.6
       with:
         attrs: ci.job.nixos.run.test
         command: ci-build-cache
@@ -167,7 +167,7 @@ jobs:
         stdin: ${{ runner.temp }}/ci.build.cache
     - id: artifact-build
       name: artifact build
-      uses: arcnmx/ci/actions/nix/build@master
+      uses: arcnmx/ci/actions/nix/build@v0.6
       with:
         attrs: config.jobs.nixos.artifactPackage
         file: <ci>
